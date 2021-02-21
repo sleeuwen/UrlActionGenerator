@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+#
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2BEF71EA-616E-4260-9176-2D2B726EB1A9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7BBA9E55-B193-41F0-A172-D856CEDD8FE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlActionGenerator", "src\UrlActionGenerator\UrlActionGenerator.csproj", "{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{50A58334-4CBE-40AD-A0BF-12B94F31A4F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCoreSample", "samples\AspNetCoreSample\AspNetCoreSample.csproj", "{8A3D7795-5153-4191-B204-9D039BAA6C32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlActionGeneratorTests", "UrlActionGeneratorTests\UrlActionGeneratorTests.csproj", "{722EFA3B-2B71-4503-A2FB-6517ABEA893F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48} = {2BEF71EA-616E-4260-9176-2D2B726EB1A9}
+		{8A3D7795-5153-4191-B204-9D039BAA6C32} = {50A58334-4CBE-40AD-A0BF-12B94F31A4F9}
+		{722EFA3B-2B71-4503-A2FB-6517ABEA893F} = {7BBA9E55-B193-41F0-A172-D856CEDD8FE8}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A3D7795-5153-4191-B204-9D039BAA6C32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A3D7795-5153-4191-B204-9D039BAA6C32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A3D7795-5153-4191-B204-9D039BAA6C32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A3D7795-5153-4191-B204-9D039BAA6C32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{722EFA3B-2B71-4503-A2FB-6517ABEA893F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{722EFA3B-2B71-4503-A2FB-6517ABEA893F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{722EFA3B-2B71-4503-A2FB-6517ABEA893F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{722EFA3B-2B71-4503-A2FB-6517ABEA893F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
