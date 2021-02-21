@@ -21,7 +21,15 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal --collect 'XPlat Code Coverage' --settings coveralls.runsettings
+      - run: |
+          mkdir TestResults
+          mv tests/*/TestResults/*/coverage.info TestResults/.
+      - name: Publish Code Coverage
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./TestResults/coverage.info
       - name: Publish NuGet
         id: publish_nuget
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
