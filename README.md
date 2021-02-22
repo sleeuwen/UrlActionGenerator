@@ -1,9 +1,10 @@
 ## UrlActionGenerator
 
+[![NuGet Version](http://img.shields.io/nuget/v/UrlActionGenerator.svg?style=flat)](https://www.nuget.org/packages/UrlActionGenerator/) 
+[![Coverage Status](https://coveralls.io/repos/github/sleeuwen/UrlActionGenerator/badge.svg?branch=master)](https://coveralls.io/github/sleeuwen/UrlActionGenerator?branch=master)
+
 UrlActionGenerator is a C# Source Generator that assists the generation of URL's in ASP.NET Core projects
 and enforces the existance of a controller and method for the referenced URL.
-
-[![Coverage Status](https://coveralls.io/repos/github/sleeuwen/UrlActionGenerator/badge.svg?branch=master)](https://coveralls.io/github/sleeuwen/UrlActionGenerator?branch=master)
 
 ### Getting Started
 
