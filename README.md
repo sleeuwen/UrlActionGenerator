@@ -6,18 +6,43 @@
 UrlActionGenerator is a C# Source Generator that assists the generation of URL's in ASP.NET Core projects
 and enforces the existance of a controller and method for the referenced URL.
 
-### Getting Started
+### What is UrlActionGenerator
 
-To start using this package, simply add the `UrlActionGenerator` package to your ASP.NET Core project.
-After the package is installed, it will automatically find your controllers and add extension methods to
-the `IUrlHelper` class, which is available in Controllers and Razor views through the `Url` property.
+UrlActionGenerator is a C# Source Generator that runs as part of the compilation process. Every time
+your project is being compiled, the compiler calls into UrlActionGenerator with the sources of your project.
+Using the same set of rules used by ASP.NET Core, UrlActionGenerator will figure out what all the controller
+classes are in your project and the actions.
+
+Using the list of controllers and actions, some extra classes are generated as extension methods on the
+`IUrlHelper` class to generate type-safe methods for all controller actions in your project. These methods 
+will contain the same parameters as your action methods so you can set them like you would be calling the
+method. The standard `IUrlHelper.Action("ActionName", "ControllerName")` method will then be used to generate
+the actual url, so if you use any custom `[Route]` or `[HttpGet("url")]` attributes, they will still work the
+same way as if you were using the `IUrlHelper.Action` method yourself.
+
+### How to use
+
+To start using this package, simply add the `UrlActionGenerator` package to your ASP.NET Core project by
+using the IDE tooling or running the below command:
+
+    dotnet add package UrlActionGenerator
+
+After that, your controllers and actions are automatically discovered and intellisense should almost directly be
+available in your controllers and views on the `IUrlHelper`.
+
+UrlActionGenerator automatically generates extension methods on the `IUrlHelper`, the default method is `Actions()`
+which returns a class with properties for all the controllers in your project, those properties return another
+class with all the actions available in the controller and the parameters on those actions. If you use Area's in your
+project there are some extra extensions methods generated, one for each area. The name of those extension methods
+are `{AreaName}Actions()`, so for an "Admin" area it will be `AdminActions()`.
 
 ### Examples
 
-How to use with a simple controller/action combo:
+Below are some examples on the methods that are generated in what scenario, how you can use it and what the result is.
+First off, a simple controller action without any parameters:
 
 **Controller:**
-```
+```csharp
 public class HomeController : Controller
 {
     public IActionResult Index()
@@ -39,7 +64,7 @@ Url.Actions().Home.Index()
 
 -----
 
-An action with parameters
+A simple controller action with parameters and default parameter values
 
 **Controller:**
 ```csharp
@@ -55,7 +80,7 @@ public class HomeController : Controller
 **Usage:**
 ```
 Url.Actions().Home.Search(1);
-Url.Actions().Home.Search(2, pageSize: 50);
+Url.Actions().Home.Search(2, 50);
 ```
 
 **Result:**
@@ -89,13 +114,3 @@ Url.AdminActions().Home.Index("value");
 ```
 /Admin/Home/Index?str=value
 ```
-
-
-### How it works
-
-UrlActionGenerator is a C# Source Generator that runs as part of the compilation process. Every time
-your project is being compiled, the sources are passed into UrlActionGenerator which in turn uses these
-sources to search for controllers and actions.
-
-When there are actions found in the project, a new _generated_ class is added to the compilation with
-the extension methods on `IUrlHelper`.
