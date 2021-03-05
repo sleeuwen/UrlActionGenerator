@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.CodeAnalysis;
@@ -36,15 +37,18 @@ namespace TestCode
 
             driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
 
-            Assert.Empty(diagnostics);
-            Assert.Equal(2, outputCompilation.SyntaxTrees.Count());
-            var diag = outputCompilation.GetDiagnostics().ToList();
-            Assert.Empty(outputCompilation.GetDiagnostics().Where(x => x.Severity != DiagnosticSeverity.Hidden));
+            diagnostics.Should().BeEmpty();
+            outputCompilation.SyntaxTrees.Should().HaveCount(2);
+
+            var hiddenDiagnostics = outputCompilation.GetDiagnostics().Where(x => x.Severity != DiagnosticSeverity.Hidden);
+            hiddenDiagnostics.Should().BeEmpty();
 
             var result = driver.GetRunResult();
 
-            var tree = Assert.Single(result.GeneratedTrees);
-            Assert.Empty(result.Diagnostics);
+            result.GeneratedTrees.Should().ContainSingle();
+            result.Diagnostics.Should().BeEmpty();
+
+            var tree = result.GeneratedTrees.Single();
 
             Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
 {
@@ -74,6 +78,78 @@ namespace TestCode
 
                 public string Index()
                     => urlHelper.Action(""Index"", ""Home"", new { area = """" });
+            }
+        }
+
+    }
+}
+", tree.ToString());
+        }
+        [Fact]
+        public void Execute_KeywordParameter_Success()
+        {
+            var compilation = CreateCompilation(@"
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    public class HomeController : Controller
+    {
+        public IActionResult Index(string @return)
+        {
+            return View(new { value = @return });
+        }
+    }
+}");
+
+            var generator = new SourceGenerator();
+
+            var driver = CSharpGeneratorDriver.Create(generator) as GeneratorDriver;
+
+            driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
+
+            diagnostics.Should().BeEmpty();
+            outputCompilation.SyntaxTrees.Should().HaveCount(2);
+
+            var hiddenDiagnostics = outputCompilation.GetDiagnostics().Where(x => x.Severity != DiagnosticSeverity.Hidden);
+            hiddenDiagnostics.Should().BeEmpty();
+
+            var result = driver.GetRunResult();
+
+            result.GeneratedTrees.Should().ContainSingle();
+            result.Diagnostics.Should().BeEmpty();
+
+            var tree = result.GeneratedTrees.Single();
+
+            Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
+{
+    public static class UrlHelperExtensions
+    {
+        public static UrlActions Actions(this IUrlHelper urlHelper)
+            => new UrlActions(urlHelper);
+
+        public class UrlActions
+        {
+            private readonly IUrlHelper urlHelper;
+            public UrlActions(IUrlHelper urlHelper)
+            {
+                this.urlHelper = urlHelper;
+            }
+
+            public HomeControllerActions Home
+                => new HomeControllerActions(urlHelper);
+
+            public class HomeControllerActions
+            {
+                private readonly IUrlHelper urlHelper;
+                public HomeControllerActions(IUrlHelper urlHelper)
+                {
+                    this.urlHelper = urlHelper;
+                }
+
+                public string Index(string @return)
+                    => urlHelper.Action(""Index"", ""Home"", new { area = """", @return });
             }
         }
 

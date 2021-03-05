@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,10 +8,9 @@ namespace UrlActionGenerator
 {
     public static class MvcDiscoverer
     {
-        public static IEnumerable<AreaDescriptor> DiscoverAreaControllerActions(Compilation compilation)
+        public static IEnumerable<AreaDescriptor> DiscoverAreaControllerActions(Compilation compilation, List<TypeDeclarationSyntax> possibleControllers)
         {
-            var allClasses = compilation.SyntaxTrees
-                .SelectMany(st => st.GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>())
+            var allClasses = possibleControllers
                 .Select(st => compilation.GetSemanticModel(st.SyntaxTree).GetDeclaredSymbol(st));
 
             var controllerTypes = DiscoverControllers(allClasses);
@@ -61,15 +59,12 @@ namespace UrlActionGenerator
             return controller;
         }
 
-        public static IList<ITypeSymbol> DiscoverControllers(IEnumerable<ISymbol> symbols)
+        public static IList<INamedTypeSymbol> DiscoverControllers(IEnumerable<ISymbol> symbols)
         {
             return symbols
-                .OfType<ITypeSymbol>()
-                .Where(IsAController)
+                .OfType<INamedTypeSymbol>()
+                .Where(MvcFacts.IsController)
                 .ToList();
-
-            static bool IsAController(ITypeSymbol typeSymbol)
-                => GetAttributes(typeSymbol, true).Any(attr => attr.AttributeClass?.Name == "ControllerAttribute" && GetFullNamespace(attr.AttributeClass) == "Microsoft.AspNetCore.Mvc");
         }
 
         public static IList<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol)

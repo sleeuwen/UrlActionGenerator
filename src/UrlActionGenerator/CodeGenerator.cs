@@ -108,7 +108,7 @@ namespace UrlActionGenerator
                 first = false;
 
                 writer.Write(parameter.Type);
-                writer.Write(" ");
+                writer.Write(" @");
                 writer.Write(parameter.Name);
 
                 if (parameter.HasDefaultValue)
@@ -125,7 +125,7 @@ namespace UrlActionGenerator
 
             foreach (var parameter in action.Parameters)
             {
-                writer.Write($", {parameter.Name}");
+                writer.Write($", @{parameter.Name}");
             }
 
             writer.WriteLine(" });");

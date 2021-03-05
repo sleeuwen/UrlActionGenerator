@@ -12,12 +12,13 @@ namespace UrlActionGenerator
     {
         public void Initialize(GeneratorInitializationContext context)
         {
-            // No initialization required
+            context.RegisterForSyntaxNotifications(() => new MySyntaxReceiver());
         }
 
         public void Execute(GeneratorExecutionContext context)
         {
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation).ToList();
+            var syntaxReceiver = context.SyntaxReceiver as MySyntaxReceiver;
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation, syntaxReceiver.PossibleControllers).ToList();
 
             using var sourceWriter = new StringWriter();
             using var writer = new IndentedTextWriter(sourceWriter, "    ");

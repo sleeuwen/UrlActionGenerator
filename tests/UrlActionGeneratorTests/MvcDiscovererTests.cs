@@ -21,6 +21,29 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TestCode
 {
+    public class Home
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Empty(areas);
+        }
+
+        [Fact]
+        public void DiscoverAreaControllerActions_ImplicitControllerNoArea()
+        {
+            var compilation = CreateCompilation(@"
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
     public class HomeController
     {
         public IActionResult Index()
@@ -30,9 +53,16 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
-            Assert.Empty(areas);
+            Assert.Single(areas);
+            Assert.Empty(areas[0].Name);
+            Assert.Single(areas[0].Controllers);
+            Assert.Equal("Home", areas[0].Controllers[0].Name);
+            Assert.Single(areas[0].Controllers[0].Actions);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
+            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
         }
 
         [Fact]
@@ -52,7 +82,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -88,7 +119,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -123,7 +155,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -153,7 +186,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("Admin", areas[0].Name);
@@ -182,7 +216,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -221,7 +256,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -261,7 +297,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -296,7 +333,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
             Assert.Equal("", areas[0].Name);
@@ -311,8 +349,6 @@ namespace TestCode
             Assert.False(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
             Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
         }
-
-
 
         [Fact]
         public void DiscoverAreaControllerActions_SingleControllerNonAction()
@@ -334,7 +370,8 @@ namespace TestCode
     }
 }");
 
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation).ToList();
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Empty(areas);
         }

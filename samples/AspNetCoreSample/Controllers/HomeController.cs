@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+using AspNetCoreSample.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using AspNetCoreSample.Models;
 
 namespace AspNetCoreSample.Controllers
 {
@@ -23,9 +19,9 @@ namespace AspNetCoreSample.Controllers
             return View();
         }
 
-        public IActionResult Greeting(string who)
+        public IActionResult Greeting(string @return)
         {
-            return View("Greeting", who);
+            return View("Greeting", @return);
         }
 
         public IActionResult Privacy()

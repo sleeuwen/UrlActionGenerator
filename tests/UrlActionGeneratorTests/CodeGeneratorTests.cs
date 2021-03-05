@@ -367,8 +367,8 @@ public class HomeControllerActions
             CodeGenerator.WriteAction(_writer, action);
 
             // Assert
-            Assert.Equal(@"public string List(string search, int page)
-    => urlHelper.Action(""List"", ""Home"", new { area = """", search, page });
+            Assert.Equal(@"public string List(string @search, int @page)
+    => urlHelper.Action(""List"", ""Home"", new { area = """", @search, @page });
 ", _code.ToString());
         }
 
@@ -385,8 +385,8 @@ public class HomeControllerActions
             CodeGenerator.WriteAction(_writer, action);
 
             // Assert
-            Assert.Equal(@"public string List(string search, int page = 1)
-    => urlHelper.Action(""List"", ""Home"", new { area = """", search, page });
+            Assert.Equal(@"public string List(string @search, int @page = 1)
+    => urlHelper.Action(""List"", ""Home"", new { area = """", @search, @page });
 ", _code.ToString());
         }
     }
