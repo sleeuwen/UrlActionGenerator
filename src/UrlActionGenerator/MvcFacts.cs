@@ -188,46 +188,11 @@ namespace UrlActionGenerator
             }
         }
 
-        private static bool IsAssignableFrom(this ITypeSymbol source, ITypeSymbol target)
-        {
-            source = source ?? throw new ArgumentNullException(nameof(source));
-            target = target ?? throw new ArgumentNullException(nameof(target));
-
-            if (SymbolEqualityComparer.Default.Equals(source, target))
-            {
-                return true;
-            }
-
-            if (source.TypeKind == TypeKind.Interface)
-            {
-                foreach (var @interface in target.AllInterfaces)
-                {
-                    if (SymbolEqualityComparer.Default.Equals(source, @interface))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            foreach (var type in target.GetTypeHierarchy())
-            {
-                if (SymbolEqualityComparer.Default.Equals(source, type))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-
         private static INamedTypeSymbol GetDeclaringType(IMethodSymbol method)
         {
             while (method.IsOverride)
             {
-                if (method.OverriddenMethod == null)
+                if (method.OverriddenMethod is null)
                 {
                     throw new ArgumentNullException(nameof(method.OverriddenMethod));
                 }
@@ -270,9 +235,9 @@ namespace UrlActionGenerator
 
         private static string GetFullName(INamespaceOrTypeSymbol typeSymbol) => typeSymbol switch
         {
-            { IsNamespace: false } => GetFullName(typeSymbol.ContainingNamespace),
-            { Name: var name } => (GetFullName(typeSymbol.ContainingNamespace) + "." + name).TrimStart('.'),
-            _ => "",
+            { Name: var name, ContainingNamespace: var @namespace } when @namespace is not null
+                => (GetFullName(@namespace) + "." + name).TrimStart('.'),
+            { Name: var name } => name,
         };
     }
 }

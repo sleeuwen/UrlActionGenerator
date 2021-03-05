@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.CodeAnalysis;
@@ -22,6 +24,75 @@ using Microsoft.AspNetCore.Mvc;
 namespace TestCode
 {
     public class Home
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Empty(areas);
+        }
+
+        [Fact]
+        public void DiscoverAreaControllerActions_PrivateControllerNoArea()
+        {
+            var compilation = CreateCompilation(@"
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    private class HomeController
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Empty(areas);
+        }
+
+        [Fact]
+        public void DiscoverAreaControllerActions_GenericControllerNoArea()
+        {
+            var compilation = CreateCompilation(@"
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    public class HomeController<T>
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Empty(areas);
+        }
+
+        [Fact]
+        public void DiscoverAreaControllerActions_AbstractControllerNoArea()
+        {
+            var compilation = CreateCompilation(@"
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    public abstract class HomeController
     {
         public IActionResult Index()
         {
@@ -374,6 +445,43 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Empty(areas);
+        }
+
+        [Theory]
+        [InlineData("System.String", "string")]
+        [InlineData("System.Byte", "byte")]
+        [InlineData("System.SByte", "sbyte")]
+        [InlineData("System.Char", "char")]
+        [InlineData("System.Int16", "short")]
+        [InlineData("System.Int32", "int")]
+        [InlineData("System.Int64", "long")]
+        [InlineData("System.UInt16", "ushort")]
+        [InlineData("System.UInt32", "uint")]
+        [InlineData("System.UInt64", "ulong")]
+        [InlineData("System.Boolean", "bool")]
+        [InlineData("System.Decimal", "decimal")]
+        [InlineData("System.Float", "float")]
+        [InlineData("System.Double", "double")]
+        [InlineData("System.Object", "object")]
+        [InlineData("System.DateTime", "System.DateTime")]
+        [InlineData("System.DateTimeOffset", "System.DateTimeOffset")]
+        public void GetTypeName(string type, string expected)
+        {
+            var compilation = CreateCompilation(@$"
+public class TypeHolder
+{{
+    public Method({type} type)
+    {{
+    }}
+}}");
+
+            var classSyntax = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes()).OfType<ClassDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
+
+            var method = classSymbol.GetMembers().OfType<IMethodSymbol>().Single();
+            var result = MvcDiscoverer.GetTypeName(method.Parameters.Single().Type);
+
+            Assert.Equal(expected, result);
         }
 
         private static Compilation CreateCompilation(string source)

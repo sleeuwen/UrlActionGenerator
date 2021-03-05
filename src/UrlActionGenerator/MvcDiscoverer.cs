@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -13,6 +14,8 @@ namespace UrlActionGenerator
             var allClasses = possibleControllers
                 .Select(st => compilation.GetSemanticModel(st.SyntaxTree).GetDeclaredSymbol(st));
 
+            var disposableDispose = (IMethodSymbol)compilation.GetSpecialType(SpecialType.System_IDisposable).GetMembers(nameof(IDisposable.Dispose)).First();
+
             var controllerTypes = DiscoverControllers(allClasses);
 
             var controllersByArea = controllerTypes.GroupBy(GetAreaName);
@@ -23,7 +26,7 @@ namespace UrlActionGenerator
 
                 foreach (var controllerSymbol in areaControllers)
                 {
-                    var controller = DiscoverControllerActions(controllerSymbol, area);
+                    var controller = DiscoverControllerActions(controllerSymbol, area, disposableDispose);
 
                     if (controller.Actions.Any())
                         area.Controllers.Add(controller);
@@ -34,12 +37,12 @@ namespace UrlActionGenerator
             }
         }
 
-        public static ControllerDescriptor DiscoverControllerActions(ITypeSymbol controllerSymbol, AreaDescriptor area)
+        public static ControllerDescriptor DiscoverControllerActions(ITypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
         {
             var controllerName = Regex.Replace(controllerSymbol.Name, "Controller$", "");
             var controller = new ControllerDescriptor(area, controllerName);
 
-            foreach (var actionSymbol in DiscoverActions(controllerSymbol))
+            foreach (var actionSymbol in DiscoverActions(controllerSymbol, disposableDispose))
             {
                 var actionName = Regex.Replace(actionSymbol.Name, "Async$", "");
                 var action = new ActionDescriptor(controller, actionName);
@@ -67,16 +70,11 @@ namespace UrlActionGenerator
                 .ToList();
         }
 
-        public static IList<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol)
+        public static IList<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, IMethodSymbol disposableDispose)
         {
             return controllerSymbol.GetMembers().OfType<IMethodSymbol>()
-                .Where(IsValidAction)
+                .Where(method => MvcFacts.IsControllerAction(method, disposableDispose))
                 .ToList();
-
-            static bool IsValidAction(IMethodSymbol methodSymbol)
-                => !methodSymbol.IsAbstract
-                   && methodSymbol.Name != ".ctor"
-                   && !methodSymbol.GetAttributes().Any(attr => attr.AttributeClass?.Name == "NonActionAttribute" && GetFullNamespace(attr.AttributeClass) == "Microsoft.AspNetCore.Mvc");
         }
 
         public static string GetAreaName(ITypeSymbol symbol)
@@ -133,6 +131,7 @@ namespace UrlActionGenerator
             "System.String" => "string",
             "System.Byte" => "byte",
             "System.SByte" => "sbyte",
+            "System.Char" => "char",
             "System.Int16" => "short",
             "System.Int32" => "int",
             "System.Int64" => "long",
@@ -141,6 +140,9 @@ namespace UrlActionGenerator
             "System.UInt64" => "ulong",
             "System.Boolean" => "bool",
             "System.Decimal" => "decimal",
+            "System.Double" => "double",
+            "System.Float" => "float",
+            "System.Object" => "object",
             var t => t,
         };
     }

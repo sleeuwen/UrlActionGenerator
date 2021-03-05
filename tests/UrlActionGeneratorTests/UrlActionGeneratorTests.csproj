@@ -20,4 +20,13 @@
     <ProjectReference Include="..\..\src\UrlActionGenerator\UrlActionGenerator.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="TestFiles\MvcFactsTests\IsControllerActionTests.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Update="TestFiles\MvcFactsTests\IsControllerTests.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
+
 </Project>
