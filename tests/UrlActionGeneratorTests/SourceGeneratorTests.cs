@@ -83,7 +83,7 @@ namespace TestCode
 
     }
 }
-", tree.ToString());
+", tree.ToString(), false, true);
         }
         [Fact]
         public void Execute_KeywordParameter_Success()
@@ -155,7 +155,7 @@ namespace TestCode
 
     }
 }
-", tree.ToString());
+", tree.ToString(), false, true);
         }
 
         private static Compilation CreateCompilation(string source)
