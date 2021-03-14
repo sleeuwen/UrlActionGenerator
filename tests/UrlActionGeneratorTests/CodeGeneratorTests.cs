@@ -32,7 +32,7 @@ namespace UrlActionGeneratorTests
     {
     }
 }
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -64,7 +64,7 @@ namespace UrlActionGeneratorTests
 
     }
 }
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace UrlActionGeneratorTests
 
     }
 }
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -135,7 +135,7 @@ public class UrlActions
 
 }
 
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -160,7 +160,7 @@ public class CustomUrlActions
 
 }
 
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -198,7 +198,7 @@ public class CustomUrlActions
     }
 }
 
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -250,7 +250,7 @@ public class CustomUrlActions
     }
 }
 
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -275,7 +275,7 @@ public class HomeControllerActions
     }
 
 }
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -303,7 +303,7 @@ public class HomeControllerActions
     public string Index()
         => urlHelper.Action(""Index"", ""Home"", new { area = """" });
 }
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -335,7 +335,7 @@ public class HomeControllerActions
     public string Contact()
         => urlHelper.Action(""Contact"", ""Home"", new { area = """" });
 }
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -351,7 +351,7 @@ public class HomeControllerActions
             // Assert
             Assert.Equal(@"public string Index()
     => urlHelper.Action(""Index"", ""Home"", new { area = """" });
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -369,7 +369,7 @@ public class HomeControllerActions
             // Assert
             Assert.Equal(@"public string List(string @search, int @page)
     => urlHelper.Action(""List"", ""Home"", new { area = """", @search, @page });
-", _code.ToString());
+", _code.ToString(), false, true);
         }
 
         [Fact]
@@ -387,7 +387,7 @@ public class HomeControllerActions
             // Assert
             Assert.Equal(@"public string List(string @search, int @page = 1)
     => urlHelper.Action(""List"", ""Home"", new { area = """", @search, @page });
-", _code.ToString());
+", _code.ToString(), false, true);
         }
     }
 }

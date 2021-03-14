@@ -422,6 +422,86 @@ namespace TestCode
         }
 
         [Fact]
+        public void DiscoverAreaControllerActions_NestedClassActionParameters()
+        {
+            var compilation = CreateCompilation(@"
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    public class HomeController : Controller
+    {
+        public class NestedClass
+        {
+            public int Number { get; set; }
+        }
+
+        public IActionResult Index(NestedClass param)
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Single(areas);
+            Assert.Equal("", areas[0].Name);
+            Assert.Single(areas[0].Controllers);
+            Assert.Equal("Home", areas[0].Controllers[0].Name);
+            Assert.Single(areas[0].Controllers[0].Actions);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
+            Assert.Equal(1, areas[0].Controllers[0].Actions[0].Parameters.Count);
+
+            Assert.Equal("param", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
+            Assert.Equal("TestCode.HomeController.NestedClass", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
+            Assert.False(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
+            Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
+        }
+
+        [Fact]
+        public void DiscoverAreaControllerActions_PartialClassController()
+        {
+            var compilation = CreateCompilation(@"
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    public partial class HomeController : Controller
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+
+    public partial class HomeController
+    {
+        public IActionResult About()
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Single(areas);
+            Assert.Equal("", areas[0].Name);
+            Assert.Single(areas[0].Controllers);
+            Assert.Equal("Home", areas[0].Controllers[0].Name);
+            Assert.Equal(2, areas[0].Controllers[0].Actions.Count);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
+            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("About", areas[0].Controllers[0].Actions[1].Name);
+            Assert.Empty(areas[0].Controllers[0].Actions[1].Parameters);
+        }
+
+        [Fact]
         public void DiscoverAreaControllerActions_SingleControllerNonAction()
         {
             var compilation = CreateCompilation(@"

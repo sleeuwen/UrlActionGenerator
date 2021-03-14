@@ -67,6 +67,7 @@ namespace UrlActionGenerator
             return symbols
                 .OfType<INamedTypeSymbol>()
                 .Where(MvcFacts.IsController)
+                .Distinct() // partial classes register as duplicate symbols
                 .ToList();
         }
 
@@ -85,7 +86,7 @@ namespace UrlActionGenerator
                 .SingleOrDefault() ?? "";
 
             static bool IsAreaAttribute(AttributeData attribute)
-                => attribute.AttributeClass?.Name == "AreaAttribute" && GetFullNamespace(attribute.AttributeClass) == "Microsoft.AspNetCore.Mvc";
+                => GetFullNamespacedTypeName(attribute.AttributeClass) == "Microsoft.AspNetCore.Mvc.AreaAttribute";
         }
 
         public static IEnumerable<AttributeData> GetAttributes(ITypeSymbol? typeSymbol, bool recursive = false)
@@ -102,12 +103,23 @@ namespace UrlActionGenerator
             } while (recursive);
         }
 
-        public static string GetFullNamespace(INamespaceOrTypeSymbol typeSymbol) => typeSymbol switch
+        public static string GetFullNamespacedTypeName(INamespaceOrTypeSymbol typeSymbol)
         {
-            { IsNamespace: false } => GetFullNamespace(typeSymbol.ContainingNamespace),
-            { Name: var name } => (GetFullNamespace(typeSymbol.ContainingNamespace) + "." + name).TrimStart('.'),
-            _ => "",
-        };
+            var fullName = new System.Text.StringBuilder();
+
+            while (typeSymbol != null)
+            {
+                if (!string.IsNullOrEmpty(typeSymbol.Name))
+                {
+                    if (fullName.Length > 0)
+                        fullName.Insert(0, '.');
+                    fullName.Insert(0, typeSymbol.Name);
+                }
+                typeSymbol = typeSymbol.ContainingSymbol as INamespaceOrTypeSymbol;
+            }
+
+            return fullName.ToString();
+        }
 
         public static string GetParameterType(ITypeSymbol type)
         {
@@ -126,7 +138,7 @@ namespace UrlActionGenerator
             return rootType;
         }
 
-        public static string GetTypeName(ITypeSymbol type) => (GetFullNamespace(type) + "." + type.Name) switch
+        public static string GetTypeName(ITypeSymbol type) => (GetFullNamespacedTypeName(type)) switch
         {
             "System.String" => "string",
             "System.Byte" => "byte",
