@@ -67,6 +67,7 @@ namespace UrlActionGenerator
             return symbols
                 .OfType<INamedTypeSymbol>()
                 .Where(MvcFacts.IsController)
+                .Distinct() // partial classes register as duplicate symbols
                 .ToList();
         }
 
