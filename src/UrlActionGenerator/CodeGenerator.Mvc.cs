@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace UrlActionGenerator
 {
-    public static class CodeGenerator
+    public static partial class CodeGenerator
     {
         public static void WriteUrlActions(IndentedTextWriter writer, List<AreaDescriptor> areas)
         {
@@ -11,7 +11,7 @@ namespace UrlActionGenerator
             writer.WriteLine("{");
             writer.Indent++;
 
-            writer.WriteLine("public static class UrlHelperExtensions");
+            writer.WriteLine("public static partial class UrlHelperExtensions");
             writer.WriteLine("{");
             writer.Indent++;
 

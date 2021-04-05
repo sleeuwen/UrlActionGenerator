@@ -6,7 +6,7 @@ using Xunit;
 
 namespace UrlActionGeneratorTests
 {
-    public class CodeGeneratorTests
+    public partial class CodeGeneratorTests
     {
         private readonly StringWriter _code;
         private readonly IndentedTextWriter _writer;
@@ -28,7 +28,7 @@ namespace UrlActionGeneratorTests
             // Assert
             Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
 {
-    public static class UrlHelperExtensions
+    public static partial class UrlHelperExtensions
     {
     }
 }
@@ -47,7 +47,7 @@ namespace UrlActionGeneratorTests
             // Assert
             Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
 {
-    public static class UrlHelperExtensions
+    public static partial class UrlHelperExtensions
     {
         public static UrlActions Actions(this IUrlHelper urlHelper)
             => new UrlActions(urlHelper);
@@ -80,7 +80,7 @@ namespace UrlActionGeneratorTests
             // Assert
             Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
 {
-    public static class UrlHelperExtensions
+    public static partial class UrlHelperExtensions
     {
         public static UrlActions Actions(this IUrlHelper urlHelper)
             => new UrlActions(urlHelper);

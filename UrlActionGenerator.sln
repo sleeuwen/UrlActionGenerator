@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
+#
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2BEF71EA-616E-4260-9176-2D2B726EB1A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlActionGenerator", "src\UrlActionGenerator\UrlActionGenerator.csproj", "{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}"
@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{767EC663
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlActionGeneratorTests", "tests\UrlActionGeneratorTests\UrlActionGeneratorTests.csproj", "{CA1B4CA0-7F07-4FA1-ABCF-9E4A80878BFB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCoreSamplePages", "samples\AspNetCoreSamplePages\AspNetCoreSamplePages.csproj", "{82AED541-B5A5-440A-9EFE-F5866EF6EDEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +24,7 @@ Global
 		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48} = {2BEF71EA-616E-4260-9176-2D2B726EB1A9}
 		{8A3D7795-5153-4191-B204-9D039BAA6C32} = {50A58334-4CBE-40AD-A0BF-12B94F31A4F9}
 		{CA1B4CA0-7F07-4FA1-ABCF-9E4A80878BFB} = {767EC663-4E85-4C49-904C-4F01B6A0D8F5}
+		{82AED541-B5A5-440A-9EFE-F5866EF6EDEE} = {50A58334-4CBE-40AD-A0BF-12B94F31A4F9}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{02DA4A09-F42F-49FB-88BD-C4F6E4357D48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -36,5 +39,9 @@ Global
 		{CA1B4CA0-7F07-4FA1-ABCF-9E4A80878BFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA1B4CA0-7F07-4FA1-ABCF-9E4A80878BFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA1B4CA0-7F07-4FA1-ABCF-9E4A80878BFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82AED541-B5A5-440A-9EFE-F5866EF6EDEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82AED541-B5A5-440A-9EFE-F5866EF6EDEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82AED541-B5A5-440A-9EFE-F5866EF6EDEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82AED541-B5A5-440A-9EFE-F5866EF6EDEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

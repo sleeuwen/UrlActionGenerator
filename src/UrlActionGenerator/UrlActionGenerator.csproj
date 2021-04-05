@@ -14,6 +14,8 @@
     <Description>Strongly typed URL Helper for ASP.NET Core projects</Description>
     <PackageDescription>Strongly typed URL Helper for ASP.NET Core projects</PackageDescription>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
   <ItemGroup>

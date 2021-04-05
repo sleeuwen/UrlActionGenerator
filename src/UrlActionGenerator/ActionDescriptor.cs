@@ -65,4 +65,24 @@ namespace UrlActionGenerator
 
         public object DefaultValue { get; }
     }
+
+    public class PageAreaDescriptor
+    {
+        public PageAreaDescriptor(string name)
+        {
+            Name = name;
+            Pages = new List<PageDescriptor>();
+        }
+
+        public string Name { get; set; }
+
+        public List<PageDescriptor> Pages { get; set; }
+    }
+
+    public class PageDescriptor
+    {
+        public PageAreaDescriptor Area { get; set; }
+
+        public string Name { get; set; }
+    }
 }

@@ -52,7 +52,7 @@ namespace TestCode
 
             Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
 {
-    public static class UrlHelperExtensions
+    public static partial class UrlHelperExtensions
     {
         public static UrlActions Actions(this IUrlHelper urlHelper)
             => new UrlActions(urlHelper);
@@ -124,7 +124,7 @@ namespace TestCode
 
             Assert.Equal(@"namespace Microsoft.AspNetCore.Mvc
 {
-    public static class UrlHelperExtensions
+    public static partial class UrlHelperExtensions
     {
         public static UrlActions Actions(this IUrlHelper urlHelper)
             => new UrlActions(urlHelper);
