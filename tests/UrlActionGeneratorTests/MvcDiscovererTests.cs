@@ -377,7 +377,7 @@ namespace TestCode
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
             Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Equal(1, areas[0].Controllers[0].Actions[0].Parameters.Count);
+            Assert.Single(areas[0].Controllers[0].Actions[0].Parameters);
 
             Assert.Equal("parameter", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
             Assert.Equal("System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
@@ -413,7 +413,7 @@ namespace TestCode
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
             Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Equal(1, areas[0].Controllers[0].Actions[0].Parameters.Count);
+            Assert.Single(areas[0].Controllers[0].Actions[0].Parameters);
 
             Assert.Equal("strings", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
             Assert.Equal("string[]", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
@@ -453,7 +453,7 @@ namespace TestCode
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
             Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Equal(1, areas[0].Controllers[0].Actions[0].Parameters.Count);
+            Assert.Single(areas[0].Controllers[0].Actions[0].Parameters);
 
             Assert.Equal("param", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
             Assert.Equal("TestCode.HomeController.NestedClass", areas[0].Controllers[0].Actions[0].Parameters[0].Type);

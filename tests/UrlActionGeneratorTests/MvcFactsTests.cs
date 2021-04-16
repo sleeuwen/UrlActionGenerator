@@ -63,7 +63,7 @@ namespace UrlActionGeneratorTests
         public void IsController_ReturnsFalseForTypesDerivingFromTypeWithNonControllerAttributeWithControllerAttribute() =>
             IsControllerReturnsFalse(typeof(ControllerAttributeDerivingFromNonController));
 
-        private async void IsControllerReturnsFalse(Type type)
+        private void IsControllerReturnsFalse(Type type)
         {
             var compilation = GetIsControllerCompilation();
             var typeSymbol = compilation.GetTypeByMetadataName(type.FullName);
@@ -75,7 +75,7 @@ namespace UrlActionGeneratorTests
             Assert.False(isController);
         }
 
-        private async void IsControllerReturnsTrue(Type type)
+        private void IsControllerReturnsTrue(Type type)
         {
             var compilation = GetIsControllerCompilation();
             var typeSymbol = compilation.GetTypeByMetadataName(type.FullName);

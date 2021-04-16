@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace UrlActionGenerator
 {
@@ -66,23 +67,68 @@ namespace UrlActionGenerator
         public object DefaultValue { get; }
     }
 
-    public class PageAreaDescriptor
+    public interface IPagesFoldersDescriptor
+    {
+        public List<PageDescriptor> Pages { get; }
+
+        public List<PageFolderDescriptor> Folders { get; }
+    }
+
+    public class PageAreaDescriptor : IPagesFoldersDescriptor
     {
         public PageAreaDescriptor(string name)
         {
             Name = name;
             Pages = new List<PageDescriptor>();
+            Folders = new List<PageFolderDescriptor>();
         }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public List<PageDescriptor> Pages { get; set; }
+        public List<PageDescriptor> Pages { get; }
+
+        public List<PageFolderDescriptor> Folders { get; }
+    }
+
+    public class PageFolderDescriptor : IPagesFoldersDescriptor
+    {
+        public PageFolderDescriptor(PageAreaDescriptor area, string name)
+        {
+            Area = area;
+            Name = name;
+            Pages = new List<PageDescriptor>();
+            Folders = new List<PageFolderDescriptor>();
+        }
+
+        public PageAreaDescriptor Area { get; }
+
+        public string Name { get; }
+
+        public List<PageDescriptor> Pages { get; }
+
+        public List<PageFolderDescriptor> Folders { get; }
     }
 
     public class PageDescriptor
     {
-        public PageAreaDescriptor Area { get; set; }
+        public PageDescriptor(PageAreaDescriptor area, string name, string pageHandler = null, List<ParameterDescriptor> parameters = null)
+        {
+            Area = area;
+            Name = name;
+            PageHandler = pageHandler;
+            Parameters = parameters ?? new List<ParameterDescriptor>();
+        }
 
-        public string Name { get; set; }
+        public PageAreaDescriptor Area { get; }
+
+        public string Name { get; }
+
+        public string PageHandler { get; }
+
+        public List<ParameterDescriptor> Parameters { get; }
+
+        public string Folder => Name.LastIndexOf('/') > 0
+            ? Name.Substring(0, Name.LastIndexOf('/'))
+            : null;
     }
 }

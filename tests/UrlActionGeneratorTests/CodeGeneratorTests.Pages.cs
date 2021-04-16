@@ -106,7 +106,7 @@ namespace UrlActionGeneratorTests
         public void WriteAreaPages_SinglePage()
         {
             var area = new PageAreaDescriptor("");
-            area.Pages.Add(new PageDescriptor { Area = area, Name = "/Index" });
+            area.Pages.Add(new PageDescriptor(area, "/Index", null, null));
 
             // Act
             CodeGenerator.WriteAreaPages(_writer, area);
@@ -134,8 +134,8 @@ public class UrlPages
         public void WriteAreaPages_MultiPage()
         {
             var area = new PageAreaDescriptor("");
-            area.Pages.Add(new PageDescriptor { Area = area, Name = "/Index" });
-            area.Pages.Add(new PageDescriptor { Area = area, Name = "/Privacy" });
+            area.Pages.Add(new PageDescriptor(area, "/Index"));
+            area.Pages.Add(new PageDescriptor(area, "/Privacy"));
 
             // Act
             CodeGenerator.WriteAreaPages(_writer, area);

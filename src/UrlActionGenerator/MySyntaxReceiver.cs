@@ -7,7 +7,6 @@ namespace UrlActionGenerator
     public class MySyntaxReceiver : ISyntaxReceiver
     {
         public List<TypeDeclarationSyntax> PossibleControllers { get; set; } = new List<TypeDeclarationSyntax>();
-        public List<TypeDeclarationSyntax> PossiblePages { get; set; } = new List<TypeDeclarationSyntax>();
 
         public MySyntaxReceiver()
         {
@@ -21,11 +20,6 @@ namespace UrlActionGenerator
             if (MvcFacts.CanBeController(classSyntax))
             {
                 PossibleControllers.Add(classSyntax);
-            }
-
-            if (PagesFacts.CanBePage(classSyntax))
-            {
-                PossiblePages.Add(classSyntax);
             }
         }
     }

@@ -9,27 +9,6 @@ namespace UrlActionGenerator
 {
     internal static class PagesFacts
     {
-        public static bool CanBePage(TypeDeclarationSyntax typeSyntax)
-        {
-            _ = typeSyntax ?? throw new ArgumentNullException(nameof(typeSyntax));
-
-            if (typeSyntax is not ClassDeclarationSyntax classSyntax)
-                return false;
-
-            var isAbstract = classSyntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.AbstractKeyword));
-            if (isAbstract)
-                return false;
-
-            var isPublic = classSyntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PublicKeyword));
-            if (!isPublic)
-                return false;
-
-            if (classSyntax.TypeParameterList?.Parameters.Count > 0)
-                return false;
-
-            return true;
-        }
-
         public static bool IsController(INamedTypeSymbol type)
         {
             type = type ?? throw new ArgumentNullException(nameof(type));

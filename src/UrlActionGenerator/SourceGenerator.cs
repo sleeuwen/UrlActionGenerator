@@ -1,7 +1,11 @@
+using System;
 using System.CodeDom.Compiler;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -17,32 +21,100 @@ namespace UrlActionGenerator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            var syntaxReceiver = context.SyntaxReceiver as MySyntaxReceiver;
+            if (IsRazorViewsAssembly(context))
+                return;
 
-            using var sourceWriter = new StringWriter();
-            using var writer = new IndentedTextWriter(sourceWriter, "    ");
+            CodeGenMvc(context);
+            CodeGenRazorPages(context);
+        }
 
-            // MVC
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation, syntaxReceiver.PossibleControllers).ToList();
-            if (areas.Any())
+        private static void CodeGenMvc(GeneratorExecutionContext context)
+        {
+            var syntaxReceiver = (MySyntaxReceiver)context.SyntaxReceiver;
+
+            var sw = Stopwatch.StartNew();
+
+            Log(context.Compilation, "MVC");
+            try
             {
-                CodeGenerator.WriteUrlActions(writer, areas);
+                var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation, syntaxReceiver.PossibleControllers).ToList();
+
+                if (areas.Any())
+                {
+                    using var sourceWriter = new StringWriter();
+                    using var writer = new IndentedTextWriter(sourceWriter, "    ");
+
+                    CodeGenerator.WriteUrlActions(writer, areas);
+
+                    context.AddSource("UrlSourceGenerator.Mvc.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO: Show diagnostic
+                Log(context.Compilation, $"Exception during generating MVC: {ex.Message}\n{ex.StackTrace}");
             }
 
-            // Razor Pages
-            var pages = PagesDiscoverer.DiscoverAreaPages(context.Compilation, context.AdditionalFiles).ToList();
+            sw.Stop();
+            Log(context.Compilation, $"MVC step took: {sw.Elapsed.TotalMilliseconds}ms");
+        }
 
-            foreach (var page in pages.SelectMany(p => p.Pages))
-                File.AppendAllText("/home/stephan/Urls.txt", $"{context.Compilation.AssemblyName}\t{page.Area.Name}:{page.Name}\n");
+        private static void CodeGenRazorPages(GeneratorExecutionContext context)
+        {
+            var sw = Stopwatch.StartNew();
 
-            if (pages.Any())
+            Log(context.Compilation, "Razor Pages");
+            try
             {
-                CodeGenerator.WriteUrlPages(writer, pages);
+                var pages = PagesDiscoverer.DiscoverAreaPages(context.Compilation, context.AdditionalFiles).ToList();
+
+                if (pages.Any())
+                {
+                    using var sourceWriter = new StringWriter();
+                    using var writer = new IndentedTextWriter(sourceWriter, "    ");
+
+                    CodeGenerator.WriteUrlPages(writer, pages);
+
+                    context.AddSource("UrlSourceGenerator.Pages.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO: Show diagnostic
+                Log(context.Compilation, $"Exception during generating Razor Pages: {ex.Message}\n{ex.StackTrace}");
             }
 
-            context.AddSource("UrlSourceGenerator.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
+            sw.Stop();
+            Log(context.Compilation, $"Razor Pages step took: {sw.Elapsed.TotalMilliseconds}ms");
+        }
 
-            File.AppendAllText("/home/stephan/Urls.cs", sourceWriter.ToString());
+        [Conditional("DEBUG")]
+        internal static void Log(Compilation compilation, string message)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                File.AppendAllText("/home/stephan/Urls.txt", compilation.AssemblyName + ":\t" + message.Trim() + "\n");
+            }
+        }
+
+        private static bool IsRazorViewsAssembly(GeneratorExecutionContext context)
+        {
+            if (context.Compilation.AssemblyName?.EndsWith(".Views") != true)
+                return false;
+
+            var attributes = context.Compilation.Assembly.GetAttributes();
+            var applicationPartFactoryAttribute = attributes.FirstOrDefault(attr => attr.AttributeClass?.ToString() == "Microsoft.AspNetCore.Mvc.ApplicationParts.ProvideApplicationPartFactoryAttribute");
+            if (applicationPartFactoryAttribute == null)
+                return false;
+
+            var factoryType = applicationPartFactoryAttribute.ConstructorArguments.FirstOrDefault().Value as string;
+            if (factoryType == null)
+                return false;
+
+            if (factoryType != "Microsoft.AspNetCore.Mvc.ApplicationParts.CompiledRazorAssemblyApplicationPartFactory, Microsoft.AspNetCore.Mvc.Razor")
+                return false;
+
+            return true;
         }
     }
 }

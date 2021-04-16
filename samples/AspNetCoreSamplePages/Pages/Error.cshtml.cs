@@ -26,6 +26,7 @@ namespace AspNetCoreSamplePages.Pages
 
         public void OnGet()
         {
+            _ = Url.Pages().Index();
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
         }
     }
