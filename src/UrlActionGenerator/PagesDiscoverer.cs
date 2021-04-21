@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
+using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator
 {
@@ -57,6 +56,8 @@ namespace UrlActionGenerator
                 .Where(file => file.Path.EndsWith(".cshtml"))
                 .ToList();
 
+            // Workaround for when cshtml are not included as additional file, try to read them from the filesystem
+            // TODO: Is there a better way to do this? (will Razor Source Generators fix this?)
             if (!cshtmlFiles.Any() && compilation.Options.SourceReferenceResolver is SourceFileResolver resolver)
             {
                 var baseDirectory = resolver.BaseDirectory;
@@ -69,13 +70,7 @@ namespace UrlActionGenerator
             }
 
             var pages = cshtmlFiles
-                .Where(file =>
-                {
-                    var text = file.GetText();
-                    var content = text.ToString();
-
-                    return content.Contains("@page");
-                })
+                .Where(PagesFacts.IsRazorPage)
                 .Select(file => new PageData(file))
                 .ToList();
 
@@ -85,20 +80,9 @@ namespace UrlActionGenerator
         private static Dictionary<string, List<string>> GatherImplicitUsings(List<PageData> pages)
         {
             return pages
-                .Where(page => Path.GetFileName(page.Page) == "_ViewStart.cshtml" || Path.GetFileName(page.Page) == "_ViewImports.cshtml")
-                .GroupBy(page => Path.GetDirectoryName(page.Page))
-                .ToDictionary(g => g.Key, g => g.SelectMany(file =>
-                {
-                    var content = file.AdditionalText.GetText().ToString();
-
-                    var usings = new List<string>();
-                    foreach (Match match in Regex.Matches(content, @"(^|\s)@using [\w\.]+\b", RegexOptions.IgnoreCase))
-                    {
-                        usings.Add(match.Value.Substring(7));
-                    }
-
-                    return usings;
-                }).Distinct().ToList());
+                .Where(PagesFacts.IsImplicitlyIncludedFile)
+                .GroupBy(page => page.Folder)
+                .ToDictionary(g => g.Key, g => g.SelectMany(PagesFacts.ExtractUsings).Distinct().ToList());
         }
 
         private static INamedTypeSymbol GetPageModel(PageData page, Compilation compilation, Dictionary<string, List<string>> usingsByDirectory)
@@ -106,28 +90,37 @@ namespace UrlActionGenerator
             if (page.Model == null)
                 return null;
 
-            var explicitUsings = Regex.Matches(page.AdditionalText.GetText().ToString(), @"(^|\s)@using [\w\.]+\b", RegexOptions.IgnoreCase)
-                .Cast<Match>()
-                .Select(match => match.Value.Substring(7));
+            // First try to get the page model based on the usings in this file
+            var explicitUsings = PagesFacts.ExtractUsings(page);
+            var pageModel = FindPageModel(compilation, page.Model, explicitUsings);
+            if (pageModel != null)
+                return pageModel;
 
-            var allPageModelNames = explicitUsings
-                .Concat(EnumerateUpPath(page.AdditionalText.Path).SelectMany(path =>
+            // Walk up the path and try to get the page model based on usings in the implicitly included files
+            foreach (var path in EnumerateUpPath(page.AdditionalText.Path))
+            {
+                if (usingsByDirectory.TryGetValue(path, out var usings))
                 {
-                    return usingsByDirectory.TryGetValue(path, out var usings)
-                        ? usings
-                        : Enumerable.Empty<string>();
-                }))
-                .Append(page.Model);
+                    pageModel = FindPageModel(compilation, page.Model, usings);
+                    if (pageModel != null)
+                        return pageModel;
+                }
+            }
 
-            return allPageModelNames
-                .Select(metadataName => compilation.GetTypeByMetadataName(metadataName))
-                .FirstOrDefault(type => type != null);
+            // Last try to get the page model based on what is in @model without a using
+            return FindPageModel(compilation, page.Model, new List<string> { "" });
+
+            static INamedTypeSymbol FindPageModel(Compilation compilation, string model, IEnumerable<string> usings)
+            {
+                return usings
+                    .Select(@using => compilation.GetTypeByMetadataName($"{@using}{model}"))
+                    .FirstOrDefault(symbol => symbol != null);
+            }
         }
 
         private static IPagesFoldersDescriptor GetAreaFolder(PageData page, PageAreaDescriptor area)
         {
-            var path = Path.GetDirectoryName(page.Page);
-            var folders = path.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            var folders = page.Folder.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
 
             IPagesFoldersDescriptor currentFolder = area;
             foreach (var folderName in folders)
@@ -210,7 +203,7 @@ namespace UrlActionGenerator
 
                 yield return new ParameterDescriptor(
                     parameterName,
-                    GetParameterType(member.Type),
+                    member.Type.GetTypeName(),
                     true,
                     null);
             }
@@ -257,66 +250,11 @@ namespace UrlActionGenerator
             {
                 yield return new ParameterDescriptor(
                     param.Name,
-                    GetParameterType(param.Type),
+                    param.Type.GetTypeName(),
                     param.HasExplicitDefaultValue,
                     param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null);
             }
         }
-
-        public static string GetFullNamespacedTypeName(INamespaceOrTypeSymbol typeSymbol)
-        {
-            var fullName = new System.Text.StringBuilder();
-
-            while (typeSymbol != null)
-            {
-                if (!string.IsNullOrEmpty(typeSymbol.Name))
-                {
-                    if (fullName.Length > 0)
-                        fullName.Insert(0, '.');
-                    fullName.Insert(0, typeSymbol.Name);
-                }
-                typeSymbol = typeSymbol.ContainingSymbol as INamespaceOrTypeSymbol;
-            }
-
-            return fullName.ToString();
-        }
-
-        public static string GetParameterType(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol arrayType)
-                return $"{GetParameterType(arrayType.ElementType)}[]";
-
-            var rootType = GetTypeName(type);
-
-            if (type is INamedTypeSymbol namedType && namedType.IsGenericType)
-            {
-                rootType += "<";
-                rootType += string.Join(", ", namedType.TypeArguments.Select(GetParameterType));
-                rootType += ">";
-            }
-
-            return rootType;
-        }
-
-        public static string GetTypeName(ITypeSymbol type) => (GetFullNamespacedTypeName(type)) switch
-        {
-            "System.String" => "string",
-            "System.Byte" => "byte",
-            "System.SByte" => "sbyte",
-            "System.Char" => "char",
-            "System.Int16" => "short",
-            "System.Int32" => "int",
-            "System.Int64" => "long",
-            "System.UInt16" => "ushort",
-            "System.UInt32" => "uint",
-            "System.UInt64" => "ulong",
-            "System.Boolean" => "bool",
-            "System.Decimal" => "decimal",
-            "System.Double" => "double",
-            "System.Float" => "float",
-            "System.Object" => "object",
-            var t => t,
-        };
 
         private static string GetConstraintParameterType(string[] constraints)
         {
@@ -345,101 +283,6 @@ namespace UrlActionGenerator
             }
 
             return type ?? "string";
-        }
-
-        private class PageData : IComparable<PageData>
-        {
-            private readonly string[] PathParts;
-
-            internal AdditionalText AdditionalText { get; }
-
-            private string _sourceText;
-            private string SourceText => _sourceText ??= AdditionalText.GetText().ToString();
-
-            public PageData(AdditionalText additionalText)
-            {
-                PathParts = additionalText.Path.Split('/', '\\');
-                AdditionalText = additionalText;
-            }
-
-            public string Area
-            {
-                get
-                {
-                    var areasIdx = Array.IndexOf(PathParts, "Areas");
-                    if (areasIdx < 0) return null;
-                    if (PathParts.Length < areasIdx + 3) return null;
-                    if (PathParts[areasIdx + 2] != "Pages") return null;
-
-                    return PathParts[areasIdx + 1];
-                }
-            }
-
-            public string Page
-            {
-                get
-                {
-                    var pagesIdx = Array.IndexOf(PathParts, "Pages");
-                    if (pagesIdx < 0) return null;
-                    if (PathParts.Length < pagesIdx + 2) return null;
-
-                    var page = "/" + string.Join("/", PathParts.Skip(pagesIdx + 1));
-                    return page.Substring(0, page.Length - 7);
-                }
-            }
-
-            public string Route
-            {
-                get
-                {
-                    var match = Regex.Match(SourceText, @"^\s*@page (""[^""]+"")", RegexOptions.Multiline);
-                    if (!match.Success) return null;
-                    return match.Groups[1].Value;
-                }
-            }
-
-            public string Model
-            {
-                get
-                {
-                    var match = Regex.Match(SourceText, @"^\s*@model ([\w\.]+)", RegexOptions.Multiline);
-                    if (!match.Success) return null;
-                    return match.Groups[1].Value;
-                }
-            }
-
-            public int CompareTo(PageData other)
-            {
-                var i = 0;
-                for (; other.PathParts.Length > i + 1 && PathParts.Length > i + 1; i++)
-                {
-                    var compare = string.Compare(PathParts[i], other.PathParts[i], StringComparison.Ordinal);
-                    if (compare != 0) return compare;
-                }
-
-                if (PathParts.Length > other.PathParts.Length) return -1;
-                if (PathParts.Length < other.PathParts.Length) return 1;
-
-                return string.Compare(PathParts[i], other.PathParts[i], StringComparison.Ordinal);
-            }
-        }
-
-        private class FileSystemAdditionalText : AdditionalText
-        {
-            private readonly string _basePath;
-
-            public FileSystemAdditionalText(string path, string basePath)
-            {
-                Path = path;
-                _basePath = basePath;
-            }
-
-            public override string Path { get; }
-
-            public override SourceText? GetText(CancellationToken cancellationToken = default)
-            {
-                return SourceText.From(File.OpenRead(System.IO.Path.Combine(_basePath, Path.TrimStart('/', '\\'))));
-            }
         }
     }
 }

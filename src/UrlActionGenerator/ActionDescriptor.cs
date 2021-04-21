@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace UrlActionGenerator
 {
@@ -126,9 +125,5 @@ namespace UrlActionGenerator
         public string PageHandler { get; }
 
         public List<ParameterDescriptor> Parameters { get; }
-
-        public string Folder => Name.LastIndexOf('/') > 0
-            ? Name.Substring(0, Name.LastIndexOf('/'))
-            : null;
     }
 }

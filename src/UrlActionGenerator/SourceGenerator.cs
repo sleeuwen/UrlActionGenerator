@@ -1,11 +1,11 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -21,7 +21,7 @@ namespace UrlActionGenerator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            if (IsRazorViewsAssembly(context))
+            if (AssemblyFacts.IsRazorViewsAssembly(context.Compilation.Assembly))
                 return;
 
             CodeGenMvc(context);
@@ -89,32 +89,20 @@ namespace UrlActionGenerator
         }
 
         [Conditional("DEBUG")]
+        [ExcludeFromCodeCoverage]
         internal static void Log(Compilation compilation, string message)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                File.AppendAllText("/home/stephan/Urls.txt", compilation.AssemblyName + ":\t" + message.Trim() + "\n");
+                try
+                {
+                    File.AppendAllText("/home/stephan/Urls.txt", compilation.AssemblyName + ":\t" + message.Trim() + "\n");
+                }
+                catch (Exception)
+                {
+                    // Ignored
+                }
             }
-        }
-
-        private static bool IsRazorViewsAssembly(GeneratorExecutionContext context)
-        {
-            if (context.Compilation.AssemblyName?.EndsWith(".Views") != true)
-                return false;
-
-            var attributes = context.Compilation.Assembly.GetAttributes();
-            var applicationPartFactoryAttribute = attributes.FirstOrDefault(attr => attr.AttributeClass?.ToString() == "Microsoft.AspNetCore.Mvc.ApplicationParts.ProvideApplicationPartFactoryAttribute");
-            if (applicationPartFactoryAttribute == null)
-                return false;
-
-            var factoryType = applicationPartFactoryAttribute.ConstructorArguments.FirstOrDefault().Value as string;
-            if (factoryType == null)
-                return false;
-
-            if (factoryType != "Microsoft.AspNetCore.Mvc.ApplicationParts.CompiledRazorAssemblyApplicationPartFactory, Microsoft.AspNetCore.Mvc.Razor")
-                return false;
-
-            return true;
         }
     }
 }

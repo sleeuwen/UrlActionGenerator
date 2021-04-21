@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator
 {
@@ -51,7 +52,7 @@ namespace UrlActionGenerator
                 {
                     action.Parameters.Add(new ParameterDescriptor(
                         parameterSymbol.Name,
-                        GetParameterType(parameterSymbol.Type),
+                        parameterSymbol.Type.GetTypeName(),
                         parameterSymbol.HasExplicitDefaultValue,
                         parameterSymbol.HasExplicitDefaultValue ? parameterSymbol.ExplicitDefaultValue : null));
                 }
@@ -86,7 +87,7 @@ namespace UrlActionGenerator
                 .SingleOrDefault() ?? "";
 
             static bool IsAreaAttribute(AttributeData attribute)
-                => GetFullNamespacedTypeName(attribute.AttributeClass) == "Microsoft.AspNetCore.Mvc.AreaAttribute";
+                => attribute.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.AreaAttribute";
         }
 
         public static IEnumerable<AttributeData> GetAttributes(ITypeSymbol? typeSymbol, bool recursive = false)
@@ -102,60 +103,5 @@ namespace UrlActionGenerator
                 typeSymbol = typeSymbol.BaseType;
             } while (recursive);
         }
-
-        public static string GetFullNamespacedTypeName(INamespaceOrTypeSymbol typeSymbol)
-        {
-            var fullName = new System.Text.StringBuilder();
-
-            while (typeSymbol != null)
-            {
-                if (!string.IsNullOrEmpty(typeSymbol.Name))
-                {
-                    if (fullName.Length > 0)
-                        fullName.Insert(0, '.');
-                    fullName.Insert(0, typeSymbol.Name);
-                }
-                typeSymbol = typeSymbol.ContainingSymbol as INamespaceOrTypeSymbol;
-            }
-
-            return fullName.ToString();
-        }
-
-        public static string GetParameterType(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol arrayType)
-                return $"{GetParameterType(arrayType.ElementType)}[]";
-
-            var rootType = GetTypeName(type);
-
-            if (type is INamedTypeSymbol namedType && namedType.IsGenericType)
-            {
-                rootType += "<";
-                rootType += string.Join(", ", namedType.TypeArguments.Select(GetParameterType));
-                rootType += ">";
-            }
-
-            return rootType;
-        }
-
-        public static string GetTypeName(ITypeSymbol type) => (GetFullNamespacedTypeName(type)) switch
-        {
-            "System.String" => "string",
-            "System.Byte" => "byte",
-            "System.SByte" => "sbyte",
-            "System.Char" => "char",
-            "System.Int16" => "short",
-            "System.Int32" => "int",
-            "System.Int64" => "long",
-            "System.UInt16" => "ushort",
-            "System.UInt32" => "uint",
-            "System.UInt64" => "ulong",
-            "System.Boolean" => "bool",
-            "System.Decimal" => "decimal",
-            "System.Double" => "double",
-            "System.Float" => "float",
-            "System.Object" => "object",
-            var t => t,
-        };
     }
 }
