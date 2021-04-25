@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using UrlActionGenerator.Descriptors;
 using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator

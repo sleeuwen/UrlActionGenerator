@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UrlActionGenerator;
+using UrlActionGenerator.Descriptors;
 using Xunit;
 
 namespace UrlActionGeneratorTests

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using UrlActionGenerator;
+using UrlActionGenerator.Descriptors;
 using Xunit;
 
 namespace UrlActionGeneratorTests
