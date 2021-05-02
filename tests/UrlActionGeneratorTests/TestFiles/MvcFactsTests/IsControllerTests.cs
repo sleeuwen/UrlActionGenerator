@@ -43,4 +43,8 @@ namespace UrlActionGeneratorTests.TestFiles.MvcFactsTests
     public class ControllerAttributeDerivingFromNonController : BaseNonController { }
 
     public class BasePocoNonControllerChildController : BaseNonController { }
+
+    internal class InternalController : Controller { }
+
+    class PrivateController : Controller { }
 }

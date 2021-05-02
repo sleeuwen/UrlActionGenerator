@@ -126,12 +126,12 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Empty(areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -155,12 +155,12 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -192,18 +192,18 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Equal(2, areas[0].Controllers.Count);
 
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
 
             Assert.Equal("Contact", areas[0].Controllers[1].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -228,12 +228,12 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -263,8 +263,8 @@ namespace TestCode
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -289,22 +289,22 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Equal(2, areas[0].Controllers[0].Actions[0].Parameters.Count);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
 
-            Assert.Equal("search", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
-            Assert.Equal("string", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
+            Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("string", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
 
-            Assert.Equal("page", areas[0].Controllers[0].Actions[0].Parameters[1].Name);
-            Assert.Equal("int", areas[0].Controllers[0].Actions[0].Parameters[1].Type);
-            Assert.False(areas[0].Controllers[0].Actions[0].Parameters[1].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[1].DefaultValue);
+            Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
+            Assert.Equal("int", areas[0].Controllers[0].Actions.Single().Parameters[1].Type);
+            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
+            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[1].DefaultValue);
         }
 
         [Fact]
@@ -329,22 +329,22 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Equal(2, areas[0].Controllers[0].Actions[0].Parameters.Count);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
 
-            Assert.Equal("search", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
-            Assert.Equal("string", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
-            Assert.True(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
-            Assert.Equal("", areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
+            Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("string", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Equal("", areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
 
-            Assert.Equal("page", areas[0].Controllers[0].Actions[0].Parameters[1].Name);
-            Assert.Equal("int", areas[0].Controllers[0].Actions[0].Parameters[1].Type);
-            Assert.True(areas[0].Controllers[0].Actions[0].Parameters[1].HasDefaultValue);
-            Assert.Equal(1, areas[0].Controllers[0].Actions[0].Parameters[1].DefaultValue);
+            Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
+            Assert.Equal("int", areas[0].Controllers[0].Actions.Single().Parameters[1].Type);
+            Assert.True(areas[0].Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
+            Assert.Equal(1, areas[0].Controllers[0].Actions.Single().Parameters[1].DefaultValue);
         }
 
         [Fact]
@@ -370,17 +370,17 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
 
-            Assert.Equal("parameter", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
-            Assert.Equal("System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
+            Assert.Equal("parameter", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
 
         [Fact]
@@ -406,17 +406,17 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
 
-            Assert.Equal("strings", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
-            Assert.Equal("string[]", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
+            Assert.Equal("strings", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("string[]", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
 
         [Fact]
@@ -446,17 +446,17 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions[0].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
 
-            Assert.Equal("param", areas[0].Controllers[0].Actions[0].Parameters[0].Name);
-            Assert.Equal("TestCode.HomeController.NestedClass", areas[0].Controllers[0].Actions[0].Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions[0].Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions[0].Parameters[0].DefaultValue);
+            Assert.Equal("param", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("TestCode.HomeController.NestedClass", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
 
         [Fact]
@@ -489,14 +489,14 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
+            Assert.Null(areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Equal(2, areas[0].Controllers[0].Actions.Count);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions[0].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[0].Parameters);
-            Assert.Equal("About", areas[0].Controllers[0].Actions[1].Name);
-            Assert.Empty(areas[0].Controllers[0].Actions[1].Parameters);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.First().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.First().Parameters);
+            Assert.Equal("About", areas[0].Controllers[0].Actions.Skip(1).First().Name);
+            Assert.Empty(areas[0].Controllers[0].Actions.Skip(1).First().Parameters);
         }
 
         [Fact]

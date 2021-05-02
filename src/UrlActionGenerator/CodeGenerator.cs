@@ -1,5 +1,6 @@
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UrlActionGenerator.Descriptors;
 
@@ -82,22 +83,45 @@ public class {className}
                 if (parameter.HasDefaultValue)
                 {
                     writer.Write(" = ");
-                    writer.Write(parameter.DefaultValue switch
-                    {
-                        null => "default",
-                        string str => $"\"{str.Replace("\"", "\\\"")}\"",
-                        var val => val.ToString(),
-                    });
+                    writer.Write(ScalarValue(parameter.DefaultValue));
                 }
             }
         }
 
-        internal static void WriteRouteParameters(TextWriter writer, IEnumerable<ParameterDescriptor> parameters)
+        internal static void WriteRouteValues(IndentedTextWriter writer, IEnumerable<ParameterDescriptor> parameters, IEnumerable<KeyValuePair<string, object>> extras)
         {
+            writer.WriteLine("var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {");
+            writer.Indent++;
+
+            foreach (var kv in extras)
+            {
+                writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>(\"{kv.Key}\", {ScalarValue(kv.Value ?? "")}),");
+            }
+
             foreach (var parameter in parameters)
             {
-                writer.Write($", @{parameter.Name}");
+                if (parameter.IsNullable && (!parameter.HasDefaultValue || parameter.DefaultValue == null))
+                    writer.Write($"{parameter.Name} == null ? default : ");
+
+                writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>({ScalarValue(parameter.Name)}, @{parameter.Name}),");
             }
+
+            writer.Indent--;
+            writer.WriteLine("});");
         }
+
+        internal static string ScalarValue(object value) => value switch
+        {
+            null => "default",
+            string str => $"\"{str.Replace("\"", "\\\"")}\"",
+            bool b => b.ToString().ToLowerInvariant(),
+            short s => s.ToString(CultureInfo.InvariantCulture),
+            int i => i.ToString(CultureInfo.InvariantCulture),
+            long l => l.ToString(CultureInfo.InvariantCulture),
+            float f => f.ToString(CultureInfo.InvariantCulture),
+            double d => d.ToString(CultureInfo.InvariantCulture),
+            decimal dec => dec.ToString(CultureInfo.InvariantCulture),
+            var val => val.ToString(),
+        };
     }
 }

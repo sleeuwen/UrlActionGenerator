@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace UrlActionGenerator.Descriptors
@@ -6,8 +7,8 @@ namespace UrlActionGenerator.Descriptors
     {
         public PageDescriptor(PageAreaDescriptor area, string name, string pageHandler = null, List<ParameterDescriptor> parameters = null)
         {
-            Area = area;
-            Name = name;
+            Area = area ?? throw new ArgumentNullException(nameof(area));
+            Name = name ?? throw new ArgumentNullException(nameof(name));
             PageHandler = pageHandler;
             Parameters = parameters ?? new List<ParameterDescriptor>();
         }

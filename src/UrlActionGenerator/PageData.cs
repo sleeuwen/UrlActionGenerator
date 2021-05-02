@@ -8,7 +8,7 @@ namespace UrlActionGenerator
 {
     internal class PageData
     {
-        private readonly string[] PathParts;
+        private readonly string[] _pathParts;
 
         internal AdditionalText AdditionalText { get; }
 
@@ -17,7 +17,7 @@ namespace UrlActionGenerator
 
         public PageData(AdditionalText additionalText)
         {
-            PathParts = additionalText.Path.Split('/', '\\');
+            _pathParts = additionalText.Path.Split('/', '\\');
             AdditionalText = additionalText;
         }
 
@@ -25,12 +25,12 @@ namespace UrlActionGenerator
         {
             get
             {
-                var areasIdx = Array.IndexOf(PathParts, "Areas");
+                var areasIdx = Array.IndexOf(_pathParts, "Areas");
                 if (areasIdx < 0) return null;
-                if (PathParts.Length < areasIdx + 3) return null;
-                if (PathParts[areasIdx + 2] != "Pages") return null;
+                if (_pathParts.Length < areasIdx + 3) return null;
+                if (_pathParts[areasIdx + 2] != "Pages") return null;
 
-                return PathParts[areasIdx + 1];
+                return _pathParts[areasIdx + 1];
             }
         }
 
@@ -38,11 +38,11 @@ namespace UrlActionGenerator
         {
             get
             {
-                var pagesIdx = Array.IndexOf(PathParts, "Pages");
+                var pagesIdx = Array.IndexOf(_pathParts, "Pages");
                 if (pagesIdx < 0) return null;
-                if (PathParts.Length < pagesIdx + 2) return null;
+                if (_pathParts.Length < pagesIdx + 2) return null;
 
-                var page = "/" + string.Join("/", PathParts.Skip(pagesIdx + 1));
+                var page = "/" + string.Join("/", _pathParts.Skip(pagesIdx + 1));
                 return page.Substring(0, page.Length - 7);
             }
         }

@@ -85,7 +85,7 @@ namespace UrlActionGenerator
             return GetAttributes(symbol, true)
                 .Where(IsAreaAttribute)
                 .Select(attr => (string)attr.ConstructorArguments.Single().Value)
-                .SingleOrDefault() ?? "";
+                .SingleOrDefault();
 
             static bool IsAreaAttribute(AttributeData attribute)
                 => attribute.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.AreaAttribute";

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using UrlActionGenerator.Descriptors;
 using UrlActionGenerator.Extensions;
 
@@ -11,9 +12,9 @@ namespace UrlActionGenerator
 {
     public static class PagesDiscoverer
     {
-        public static IEnumerable<PageAreaDescriptor> DiscoverAreaPages(Compilation compilation, IEnumerable<AdditionalText> additionalFiles)
+        public static IEnumerable<PageAreaDescriptor> DiscoverAreaPages(Compilation compilation, IEnumerable<AdditionalText> additionalFiles, AnalyzerConfigOptions configOptions)
         {
-            var pages = DiscoverRazorPages(additionalFiles, compilation);
+            var pages = DiscoverRazorPages(additionalFiles, compilation, configOptions);
 
             foreach (var page in pages)
             {
@@ -26,23 +27,29 @@ namespace UrlActionGenerator
             {
                 var area = new PageAreaDescriptor(group.Key);
 
-                foreach (var page in group.OrderBy(page => page))
+                foreach (var page in group)
                 {
                     var model = GetPageModel(page, compilation, usingsByDirectory);
 
                     var modelParameters = DiscoverModelParameters(model, compilation).ToList();
-                    var routeParameters = DiscoverRouteParameters(page.Route).ToList();
+                    var modelParameterNames = modelParameters.Select(param => param.Name).ToList();
+
+                    var routeParameters = DiscoverRouteParameters(page.Route).ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
                     foreach (var (pageHandler, method) in DiscoverMethods(model, compilation))
                     {
-                        var methodParameters = DiscoverMethodParameters(method);
+                        var methodParameters = DiscoverMethodParameters(method).ToList();
+                        var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
 
                         var folder = GetAreaFolder(page, area);
                         folder.Pages.Add(new PageDescriptor(
                             area,
                             page.Page,
                             pageHandler,
-                            routeParameters.Concat(methodParameters).Concat(modelParameters).ToList()));
+                            routeParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase)
+                                .Concat(methodParameters)
+                                .Concat(modelParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase))
+                                .ToList()));
                     }
                 }
 
@@ -51,14 +58,22 @@ namespace UrlActionGenerator
             }
         }
 
-        private static List<PageData> DiscoverRazorPages(IEnumerable<AdditionalText> additionalFiles, Compilation compilation)
+        private static List<PageData> DiscoverRazorPages(IEnumerable<AdditionalText> additionalFiles, Compilation compilation, AnalyzerConfigOptions configOptions)
         {
+            // Discover .cshtml files in AdditionalFiles.
             var cshtmlFiles = additionalFiles
                 .Where(file => file.Path.EndsWith(".cshtml"))
                 .ToList();
 
-            // Workaround for when cshtml are not included as additional file, try to read them from the filesystem
-            // TODO: Is there a better way to do this? (will Razor Source Generators fix this?)
+            // If no .cshtml in AdditionalFiles, try get MSBuildProjectDirectory and look in there.
+            if (!cshtmlFiles.Any() && configOptions.TryGetValue("build_property.MSBuildProjectDirectory", out var projectDirectory) && !string.IsNullOrEmpty(projectDirectory))
+            {
+                cshtmlFiles = Directory.EnumerateFiles(projectDirectory, "*.cshtml", SearchOption.AllDirectories)
+                    .Select(file => (AdditionalText)new FileSystemAdditionalText(file.Substring(projectDirectory.Length), projectDirectory))
+                    .ToList();
+            }
+
+            // If still no .cshtml files and SourceReferenceResolver contains a BaseDirectory, look in there.
             if (!cshtmlFiles.Any() && compilation.Options.SourceReferenceResolver is SourceFileResolver resolver)
             {
                 var baseDirectory = resolver.BaseDirectory;
@@ -157,7 +172,7 @@ namespace UrlActionGenerator
 
             foreach (Match constraint in matches)
             {
-                var match = Regex.Match(constraint.Groups[1].Value, @"^([^:]+)((?::[^:]+?)*)(\?)?$");
+                var match = Regex.Match(constraint.Groups[1].Value, @"^([^:?]+)((?::[^:?]+)*)(\?)?$");
 
                 var name = match.Groups[1].Value;
                 var constraints = match.Groups[2].Value.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
@@ -200,7 +215,6 @@ namespace UrlActionGenerator
                 var parameterName = nameArgument.Kind == TypedConstantKind.Primitive
                     ? (string)nameArgument.Value
                     : member.Name;
-                parameterName = char.ToLower(parameterName[0]) + parameterName.Substring(1);
 
                 yield return new ParameterDescriptor(
                     parameterName,
@@ -234,10 +248,10 @@ namespace UrlActionGenerator
                 if (!match.Success) continue;
 
                 var pageHandler = match.Groups[1].Value;
-                if (string.IsNullOrWhiteSpace(pageHandler))
-                    pageHandler = null;
                 if (pageHandler?.EndsWith("Async") ?? false)
                     pageHandler = pageHandler.Substring(0, pageHandler.Length - 5);
+                if (string.IsNullOrWhiteSpace(pageHandler))
+                    pageHandler = null;
 
                 yield return (pageHandler, method);
             }

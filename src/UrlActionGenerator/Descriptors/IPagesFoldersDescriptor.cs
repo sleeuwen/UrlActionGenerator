@@ -4,8 +4,8 @@ namespace UrlActionGenerator.Descriptors
 {
     public interface IPagesFoldersDescriptor
     {
-        public List<PageDescriptor> Pages { get; }
+        public KeyedCollection<PageDescriptor> Pages { get; }
 
-        public List<PageFolderDescriptor> Folders { get; }
+        public KeyedCollection<PageFolderDescriptor> Folders { get; }
     }
 }

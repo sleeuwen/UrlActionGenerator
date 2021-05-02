@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Linq;
 
 namespace UrlActionGenerator.Descriptors
 {
@@ -7,14 +7,14 @@ namespace UrlActionGenerator.Descriptors
         public PageAreaDescriptor(string name)
         {
             Name = name;
-            Pages = new List<PageDescriptor>();
-            Folders = new List<PageFolderDescriptor>();
+            Pages = new KeyedCollection<PageDescriptor>(page => new { page.Name, page.PageHandler, Parameters = string.Join(",", page.Parameters.Select(param => param.Type.TrimEnd('?'))) });
+            Folders = new KeyedCollection<PageFolderDescriptor>(folder => folder.Name);
         }
 
         public string Name { get; }
 
-        public List<PageDescriptor> Pages { get; }
+        public KeyedCollection<PageDescriptor> Pages { get; }
 
-        public List<PageFolderDescriptor> Folders { get; }
+        public KeyedCollection<PageFolderDescriptor> Folders { get; }
     }
 }

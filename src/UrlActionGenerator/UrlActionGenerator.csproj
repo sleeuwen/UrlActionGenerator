@@ -7,7 +7,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild> <!-- Generates a package at build -->
     <IncludeBuildOutput>false</IncludeBuildOutput> <!-- Do not include the generator as a lib dependency -->
 
-    <Version>0.3.0</Version>
+    <Version>0.4.0-alpha.4</Version>
     <PackageId>UrlActionGenerator</PackageId>
     <RepositoryUrl>https://github.com/sleeuwen/UrlActionGenerator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -17,6 +17,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
     <IncludeBuildOutput>false</IncludeBuildOutput>
+    <DevelopmentDependency>true</DevelopmentDependency>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +28,9 @@
   <ItemGroup>
     <!-- Package the generator in the analyzer directory of the nuget package -->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+
+    <!-- Package the props file -->
+    <None Include="UrlActionGenerator.props" Pack="true" PackagePath="build" Visible="false" />
   </ItemGroup>
 
 </Project>

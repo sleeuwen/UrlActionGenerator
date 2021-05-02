@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace UrlActionGenerator.Descriptors
@@ -6,8 +7,8 @@ namespace UrlActionGenerator.Descriptors
     {
         public ActionDescriptor(ControllerDescriptor controller, string actionName)
         {
-            Controller = controller;
-            Name = actionName;
+            Controller = controller ?? throw new ArgumentNullException(nameof(controller));
+            Name = actionName ?? throw new ArgumentNullException(nameof(actionName));
             Parameters = new List<ParameterDescriptor>();
         }
 

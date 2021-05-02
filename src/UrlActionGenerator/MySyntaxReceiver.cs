@@ -6,11 +6,7 @@ namespace UrlActionGenerator
 {
     public class MySyntaxReceiver : ISyntaxReceiver
     {
-        public List<TypeDeclarationSyntax> PossibleControllers { get; set; } = new List<TypeDeclarationSyntax>();
-
-        public MySyntaxReceiver()
-        {
-        }
+        public List<TypeDeclarationSyntax> PossibleControllers { get; } = new List<TypeDeclarationSyntax>();
 
         public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
         {

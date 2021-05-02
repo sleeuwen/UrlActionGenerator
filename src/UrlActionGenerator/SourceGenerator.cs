@@ -39,19 +39,16 @@ namespace UrlActionGenerator
             {
                 var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation, syntaxReceiver.PossibleControllers).ToList();
 
-                if (areas.Any())
-                {
-                    using var sourceWriter = new StringWriter();
-                    using var writer = new IndentedTextWriter(sourceWriter, "    ");
+                using var sourceWriter = new StringWriter();
+                using var writer = new IndentedTextWriter(sourceWriter, "    ");
 
-                    CodeGenerator.WriteUrlActions(writer, areas);
+                CodeGenerator.WriteUrlActions(writer, areas);
 
-                    context.AddSource("UrlSourceGenerator.Mvc.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
-                }
+                context.AddSource("UrlActionGenerator_UrlHelperExtensions.Mvc.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
             }
             catch (Exception ex)
             {
-                // TODO: Show diagnostic
+                context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MvcCodeGenException, Location.None, ex.Message, ex.StackTrace));
                 Log(context.Compilation, $"Exception during generating MVC: {ex.Message}\n{ex.StackTrace}");
             }
 
@@ -66,21 +63,18 @@ namespace UrlActionGenerator
             Log(context.Compilation, "Razor Pages");
             try
             {
-                var pages = PagesDiscoverer.DiscoverAreaPages(context.Compilation, context.AdditionalFiles).ToList();
+                var pages = PagesDiscoverer.DiscoverAreaPages(context.Compilation, context.AdditionalFiles, context.AnalyzerConfigOptions.GlobalOptions).ToList();
 
-                if (pages.Any())
-                {
-                    using var sourceWriter = new StringWriter();
-                    using var writer = new IndentedTextWriter(sourceWriter, "    ");
+                using var sourceWriter = new StringWriter();
+                using var writer = new IndentedTextWriter(sourceWriter, "    ");
 
-                    CodeGenerator.WriteUrlPages(writer, pages);
+                CodeGenerator.WriteUrlPages(writer, pages);
 
-                    context.AddSource("UrlSourceGenerator.Pages.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
-                }
+                context.AddSource("UrlActionGenerator_UrlHelperExtensions.Pages.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
             }
             catch (Exception ex)
             {
-                // TODO: Show diagnostic
+                context.ReportDiagnostic(Diagnostic.Create(Diagnostics.RazorPagesCodeGenException, Location.None, ex.Message, ex.StackTrace));
                 Log(context.Compilation, $"Exception during generating Razor Pages: {ex.Message}\n{ex.StackTrace}");
             }
 

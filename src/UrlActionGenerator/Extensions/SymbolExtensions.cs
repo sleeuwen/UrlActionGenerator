@@ -6,6 +6,23 @@ namespace UrlActionGenerator.Extensions
 {
     internal static class SymbolExtensions
     {
+        public static bool IsSystemNullable(this ITypeSymbol symbol)
+        {
+            if (symbol is not INamedTypeSymbol namedTypeSymbol)
+                return false;
+
+            if (!namedTypeSymbol.IsGenericType)
+                return false;
+
+            if (namedTypeSymbol.TypeArguments.Length != 1)
+                return false;
+
+            if (namedTypeSymbol.GetSimpleTypeName() != "System.Nullable")
+                return false;
+
+            return true;
+        }
+
         public static string GetFullNamespacedName(this INamespaceOrTypeSymbol symbol)
         {
             var fullName = new StringBuilder();
@@ -29,6 +46,12 @@ namespace UrlActionGenerator.Extensions
         {
             if (typeSymbol is IArrayTypeSymbol arrayType)
                 return $"{GetTypeName(arrayType.ElementType)}[]";
+
+            if (typeSymbol.IsSystemNullable())
+            {
+                var underlyingType = ((INamedTypeSymbol)typeSymbol).TypeArguments[0];
+                return $"{GetTypeName(underlyingType)}?";
+            }
 
             var rootType = typeSymbol.GetSimpleTypeName();
 

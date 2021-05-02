@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace UrlActionGenerator.Descriptors
 {
     public class AreaDescriptor
@@ -7,11 +5,11 @@ namespace UrlActionGenerator.Descriptors
         public AreaDescriptor(string name)
         {
             Name = name;
-            Controllers = new List<ControllerDescriptor>();
+            Controllers = new KeyedCollection<ControllerDescriptor>(controller => controller.Name);
         }
 
         public string Name { get; }
 
-        public List<ControllerDescriptor> Controllers { get; }
+        public KeyedCollection<ControllerDescriptor> Controllers { get; }
     }
 }
