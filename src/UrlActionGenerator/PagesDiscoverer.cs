@@ -73,18 +73,6 @@ namespace UrlActionGenerator
                     .ToList();
             }
 
-            // If still no .cshtml files and SourceReferenceResolver contains a BaseDirectory, look in there.
-            if (!cshtmlFiles.Any() && compilation.Options.SourceReferenceResolver is SourceFileResolver resolver)
-            {
-                var baseDirectory = resolver.BaseDirectory;
-                if (!string.IsNullOrEmpty(baseDirectory))
-                {
-                    cshtmlFiles = Directory.EnumerateFiles(baseDirectory, "*.cshtml", SearchOption.AllDirectories)
-                        .Select(file => (AdditionalText)new FileSystemAdditionalText(file.Substring(baseDirectory.Length), baseDirectory))
-                        .ToList();
-                }
-            }
-
             var pages = cshtmlFiles
                 .Where(PagesFacts.IsRazorPage)
                 .Select(file => new PageData(file))

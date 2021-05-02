@@ -6,6 +6,8 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
+  <Import Project="..\..\src\UrlActionGenerator\UrlActionGenerator.props" />
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\UrlActionGenerator\UrlActionGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
