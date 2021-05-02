@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 
@@ -49,7 +50,9 @@ namespace UrlActionGenerator
 
         public string PageName => Path.GetFileName(Page);
 
-        public string Folder => Path.GetDirectoryName(Page);
+        public string Folder => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? Path.GetDirectoryName(Page)?.Replace('\\', '/')
+            : Path.GetDirectoryName(Page);
 
         /// <summary>
         /// The route extracted from the @page directive in the source
