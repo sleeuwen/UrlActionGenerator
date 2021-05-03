@@ -45,40 +45,65 @@ namespace Microsoft.AspNetCore.Mvc
 
         private static void WriteFoldersAndPages(IndentedTextWriter writer, IPagesFoldersDescriptor folder)
         {
-            var first = true;
-            foreach (var page in folder.Pages)
+            foreach (var pageHandlers in folder.Pages.GroupBy(page => page.Name))
             {
-                if (!first)
-                    writer.WriteLineNoTabs("");
-                first = false;
+                foreach (var page in pageHandlers.Where(handler => string.IsNullOrEmpty(handler.PageHandler)))
+                {
+                    WritePage(writer, page);
+                }
 
-                WritePages(writer, page);
+                if (pageHandlers.Any(handler => !string.IsNullOrEmpty(handler.PageHandler)))
+                {
+                    WritePageHandlers(writer, pageHandlers.Where(handler => !string.IsNullOrEmpty(handler.PageHandler)));
+                }
             }
 
             foreach (var childFolder in folder.Folders)
             {
-                if (!first)
-                    writer.WriteLineNoTabs("");
-                first = false;
-
                 WriteFolder(writer, childFolder);
             }
         }
 
-        public static void WritePages(IndentedTextWriter writer, PageDescriptor page)
+        private static void WritePage(IndentedTextWriter writer, PageDescriptor page)
         {
-            writer.Write($"public string {Path.GetFileName(page.Name)}{page.PageHandler}(");
+            writer.Write($"public string {Path.GetFileName(page.Name)}(");
             CodeGenerator.WriteMethodParameters(writer, page.Parameters);
             writer.WriteLine(")");
 
             writer.WriteLine("{");
             writer.Indent++;
 
-            CodeGenerator.WriteRouteValues(writer, page.Parameters, new Dictionary<string, object> { ["area"] = page.Area.Name, ["pageHandler"] = page.PageHandler.ToCamelCase() });
+            CodeGenerator.WriteRouteValues(writer, page.Parameters, new Dictionary<string, object> { ["area"] = page.Area.Name, ["handler"] = page.PageHandler });
             writer.WriteLine($@"return urlHelper.Page(""{page.Name}"", __routeValues);");
 
             writer.Indent--;
-            writer.WriteLine("}");
+            writer.WriteLine("}\n");
+        }
+
+        private static void WritePageHandlers(IndentedTextWriter writer, IEnumerable<PageDescriptor> pageHandlers)
+        {
+            CodeGenerator.WriteHelperClassStart(writer, $"{Path.GetFileName(pageHandlers.First().Name)}PageHandlers", $"{Path.GetFileName(pageHandlers.First().Name)}Handlers");
+            foreach (var handler in pageHandlers)
+            {
+                WriteHandler(writer, handler);
+            }
+            CodeGenerator.WriteHelperClassEnd(writer);
+        }
+
+        public static void WriteHandler(IndentedTextWriter writer, PageDescriptor page)
+        {
+            writer.Write($"public string {page.PageHandler}(");
+            CodeGenerator.WriteMethodParameters(writer, page.Parameters);
+            writer.WriteLine(")");
+
+            writer.WriteLine("{");
+            writer.Indent++;
+
+            CodeGenerator.WriteRouteValues(writer, page.Parameters, new Dictionary<string, object> { ["area"] = page.Area.Name, ["handler"] = page.PageHandler });
+            writer.WriteLine($@"return urlHelper.Page(""{page.Name}"", __routeValues);");
+
+            writer.Indent--;
+            writer.WriteLine("}\n");
         }
     }
 }

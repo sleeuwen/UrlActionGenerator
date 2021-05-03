@@ -64,7 +64,7 @@ public class {className}
         internal static void WriteHelperClassEnd(IndentedTextWriter writer)
         {
             writer.Indent -= 1;
-            writer.WriteLine("}");
+            writer.WriteLine("}\n");
         }
 
         internal static void WriteMethodParameters(TextWriter writer, IEnumerable<ParameterDescriptor> parameters)

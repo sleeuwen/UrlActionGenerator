@@ -131,10 +131,11 @@ public class UrlPages
     {
         var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
             new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-            new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+            new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
         });
         return urlHelper.Page(""/Index"", __routeValues);
     }
+
 }
 
 ", _code.ToString(), false, true);
@@ -166,7 +167,7 @@ public class UrlPages
     {
         var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
             new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-            new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+            new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
         });
         return urlHelper.Page(""/Index"", __routeValues);
     }
@@ -175,10 +176,11 @@ public class UrlPages
     {
         var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
             new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-            new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+            new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
         });
         return urlHelper.Page(""/Privacy"", __routeValues);
     }
+
 }
 
 ", _code.ToString(), false, true);
@@ -225,10 +227,11 @@ public class UrlPages
         {
             var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
                 new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-                new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+                new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
             });
             return urlHelper.Page(""/Index"", __routeValues);
         }
+
     }
 
     public OtherPagesFolder Other
@@ -246,11 +249,13 @@ public class UrlPages
         {
             var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
                 new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-                new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+                new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
             });
             return urlHelper.Page(""/Privacy"", __routeValues);
         }
+
     }
+
 }
 
 ", _code.ToString(), false, true);

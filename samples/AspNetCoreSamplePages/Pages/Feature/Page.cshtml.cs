@@ -16,6 +16,12 @@ namespace AspNetCoreSamplePages.Pages.Feature
 
         public void OnGet(int page, int pageSize)
         {
+            ViewData["message"] = "From default Handler";
+        }
+
+        public void OnGetSpecialAsync()
+        {
+            ViewData["message"] = "From Special Handler";
         }
     }
 }

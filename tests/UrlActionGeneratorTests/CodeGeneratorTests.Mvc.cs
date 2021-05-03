@@ -200,6 +200,7 @@ public class CustomUrlActions
         }
 
     }
+
 }
 
 ", _code.ToString(), false, true);
@@ -240,6 +241,7 @@ public class CustomUrlActions
 
     }
 
+
     public ContactControllerActions Contact
         => new ContactControllerActions(urlHelper);
 
@@ -252,6 +254,7 @@ public class CustomUrlActions
         }
 
     }
+
 }
 
 ", _code.ToString(), false, true);
@@ -279,6 +282,7 @@ public class HomeControllerActions
     }
 
 }
+
 ", _code.ToString(), false, true);
         }
 
@@ -312,6 +316,7 @@ public class HomeControllerActions
         return urlHelper.Action(""Index"", ""Home"", __routeValues);
     }
 }
+
 ", _code.ToString(), false, true);
         }
 
@@ -354,6 +359,7 @@ public class HomeControllerActions
         return urlHelper.Action(""Contact"", ""Home"", __routeValues);
     }
 }
+
 ", _code.ToString(), false, true);
         }
 

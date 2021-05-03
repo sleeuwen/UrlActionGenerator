@@ -88,6 +88,7 @@ namespace Microsoft.AspNetCore.Mvc
                     return urlHelper.Action(""Index"", ""Home"", __routeValues);
                 }
             }
+
         }
 
     }
@@ -175,6 +176,7 @@ namespace Microsoft.AspNetCore.Mvc
                     return urlHelper.Action(""Index"", ""Home"", __routeValues);
                 }
             }
+
         }
 
     }
@@ -296,7 +298,7 @@ namespace Microsoft.AspNetCore.Mvc
                 {
                     var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
                         new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+                        new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
                         new System.Collections.Generic.KeyValuePair<string, object>(""id"", @id),
                         new System.Collections.Generic.KeyValuePair<string, object>(""page"", @page),
                         new System.Collections.Generic.KeyValuePair<string, object>(""pageSize"", @pageSize),
@@ -312,7 +314,7 @@ namespace Microsoft.AspNetCore.Mvc
                 {
                     var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
                         new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", """"),
+                        new System.Collections.Generic.KeyValuePair<string, object>(""handler"", """"),
                         new System.Collections.Generic.KeyValuePair<string, object>(""id"", @id),
                         new System.Collections.Generic.KeyValuePair<string, object>(""str"", @str),
                         new System.Collections.Generic.KeyValuePair<string, object>(""getProperty"", @getProperty),
@@ -323,20 +325,35 @@ namespace Microsoft.AspNetCore.Mvc
                     return urlHelper.Page(""/Feature/Page"", __routeValues);
                 }
 
-                public string PageHandler(int @id, string @getProperty = default, string @namedGetProperty = default, string @queryParameter = default, string @namedQueryParameter = default)
+                public PagePageHandlers PageHandlers
+                    => new PagePageHandlers(urlHelper);
+
+                public class PagePageHandlers
                 {
-                    var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
-                        new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""pageHandler"", ""handler""),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""id"", @id),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""getProperty"", @getProperty),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""namedGetProperty"", @namedGetProperty),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""queryParameter"", @queryParameter),
-                        new System.Collections.Generic.KeyValuePair<string, object>(""namedQueryParameter"", @namedQueryParameter),
-                    });
-                    return urlHelper.Page(""/Feature/Page"", __routeValues);
+                    private readonly IUrlHelper urlHelper;
+                    public PagePageHandlers(IUrlHelper urlHelper)
+                    {
+                        this.urlHelper = urlHelper;
+                    }
+
+                    public string Handler(int @id, string @getProperty = default, string @namedGetProperty = default, string @queryParameter = default, string @namedQueryParameter = default)
+                    {
+                        var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
+                            new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
+                            new System.Collections.Generic.KeyValuePair<string, object>(""handler"", ""Handler""),
+                            new System.Collections.Generic.KeyValuePair<string, object>(""id"", @id),
+                            new System.Collections.Generic.KeyValuePair<string, object>(""getProperty"", @getProperty),
+                            new System.Collections.Generic.KeyValuePair<string, object>(""namedGetProperty"", @namedGetProperty),
+                            new System.Collections.Generic.KeyValuePair<string, object>(""queryParameter"", @queryParameter),
+                            new System.Collections.Generic.KeyValuePair<string, object>(""namedQueryParameter"", @namedQueryParameter),
+                        });
+                        return urlHelper.Page(""/Feature/Page"", __routeValues);
+                    }
+
                 }
+
             }
+
         }
 
     }

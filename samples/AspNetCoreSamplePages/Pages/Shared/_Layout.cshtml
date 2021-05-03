@@ -11,7 +11,6 @@
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container">
-            <a class="navbar-brand" asp-area="" asp-page="/Index">AspNetCoreSamplePages</a>
             <a class="navbar-brand" href="@Url.Pages().Index()">AspNetCoreSamplePages</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
@@ -20,23 +19,18 @@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                         <a class="nav-link text-dark" href="@Url.Pages().Index()">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Feature/Index">Feature Folder</a>
                         <a class="nav-link text-dark" href="@Url.Pages().Feature.Index("name")">Feature Folder</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Nested/Feature/Folder/Index">Nested Feature Folder</a>
                         <a class="nav-link text-dark" href="@Url.Pages().Nested.Feature.Folder.Index()">Nested Feature Folder</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="Admin" asp-page="/Index">Admin Area</a>
                         <a class="nav-link text-dark" href="@Url.AdminPages().Index()">Admin Area</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         <a class="nav-link text-dark" href="@Url.Pages().Privacy()">Privacy</a>
                     </li>
                 </ul>
