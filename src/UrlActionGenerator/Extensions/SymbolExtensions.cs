@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -63,6 +65,49 @@ namespace UrlActionGenerator.Extensions
             }
 
             return rootType;
+        }
+
+        public static IEnumerable<AttributeData> GetAttributes(this ITypeSymbol symbol, bool inherit)
+        {
+            do
+            {
+                if (symbol is null)
+                    yield break;
+
+                foreach (var attributeData in symbol.GetAttributes().Where(attr => attr is not null))
+                    yield return attributeData;
+
+                symbol = symbol.BaseType;
+            } while (inherit);
+        }
+
+        public static IEnumerable<AttributeData> GetAttributes(this IMethodSymbol symbol, bool inherit)
+        {
+            do
+            {
+                if (symbol is null)
+                    yield break;
+
+                foreach (var attributeData in symbol.GetAttributes().Where(attr => attr is not null))
+                    yield return attributeData;
+
+                symbol = symbol.IsOverride ? symbol.OverriddenMethod : null;
+            } while (inherit);
+        }
+
+        public static INamedTypeSymbol GetDeclaringType(this IMethodSymbol method)
+        {
+            while (method.IsOverride)
+            {
+                if (method.OverriddenMethod is null)
+                {
+                    throw new ArgumentNullException(nameof(method.OverriddenMethod));
+                }
+
+                method = method.OverriddenMethod;
+            }
+
+            return method.ContainingType;
         }
 
         internal static string GetSimpleTypeName(this ITypeSymbol typeSymbol)

@@ -48,15 +48,7 @@ namespace UrlActionGenerator
             {
                 var actionName = Regex.Replace(actionSymbol.Name, "Async$", "");
                 var action = new ActionDescriptor(controller, actionName);
-
-                foreach (var parameterSymbol in actionSymbol.Parameters)
-                {
-                    action.Parameters.Add(new ParameterDescriptor(
-                        parameterSymbol.Name,
-                        parameterSymbol.Type.GetTypeName(),
-                        parameterSymbol.HasExplicitDefaultValue,
-                        parameterSymbol.HasExplicitDefaultValue ? parameterSymbol.ExplicitDefaultValue : null));
-                }
+                action.Parameters.AddRange(RouteDiscoverer.DiscoverMethodParameters(actionSymbol));
 
                 controller.Actions.Add(action);
             }
@@ -82,27 +74,13 @@ namespace UrlActionGenerator
 
         public static string GetAreaName(ITypeSymbol symbol)
         {
-            return GetAttributes(symbol, true)
+            return symbol.GetAttributes(inherit: true)
                 .Where(IsAreaAttribute)
                 .Select(attr => (string)attr.ConstructorArguments.Single().Value)
                 .SingleOrDefault();
 
             static bool IsAreaAttribute(AttributeData attribute)
                 => attribute.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.AreaAttribute";
-        }
-
-        public static IEnumerable<AttributeData> GetAttributes(ITypeSymbol? typeSymbol, bool recursive = false)
-        {
-            do
-            {
-                if (typeSymbol == null)
-                    yield break;
-
-                foreach (var attributeData in typeSymbol.GetAttributes().Where(attributeData => attributeData != null))
-                    yield return attributeData;
-
-                typeSymbol = typeSymbol.BaseType;
-            } while (recursive);
         }
     }
 }

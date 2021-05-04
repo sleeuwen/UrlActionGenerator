@@ -7,7 +7,7 @@ using Xunit;
 
 namespace UrlActionGeneratorTests
 {
-    public class PagesDiscovererTests
+    public class RouteDiscovererTests
     {
         public static object[][] DiscoverRouteParameters_Data => new[]
         {
@@ -36,7 +36,7 @@ namespace UrlActionGeneratorTests
         public void DiscoverRouteParameters_ReturnsTheCorrectParameters(string route, IEnumerable<ParameterDescriptor> expectedParameters)
         {
             // Act
-            var parameters = PagesDiscoverer.DiscoverRouteParameters(route);
+            var parameters = RouteDiscoverer.DiscoverRouteParameters(route);
 
             // Assert
             parameters.Should().BeEquivalentTo(expectedParameters);

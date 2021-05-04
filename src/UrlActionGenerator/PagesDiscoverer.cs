@@ -23,6 +23,8 @@ namespace UrlActionGenerator
 
             var usingsByDirectory = GatherImplicitUsings(pages);
 
+            var disposableDispose = (IMethodSymbol)compilation.GetSpecialType(SpecialType.System_IDisposable).GetMembers(nameof(IDisposable.Dispose)).First();
+
             foreach (var group in pages.GroupBy(page => page.Area))
             {
                 var area = new PageAreaDescriptor(group.Key);
@@ -31,17 +33,18 @@ namespace UrlActionGenerator
                 {
                     var model = GetPageModel(page, compilation, usingsByDirectory);
 
-                    var modelParameters = DiscoverModelParameters(model, compilation).ToList();
+                    var modelParameters = RouteDiscoverer.DiscoverModelParameters(model, compilation).ToList();
                     var modelParameterNames = modelParameters.Select(param => param.Name).ToList();
 
-                    var routeParameters = DiscoverRouteParameters(page.Route).ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
+                    var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route).ToList();
+                    routeParameters = routeParameters.ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
-                    foreach (var (pageHandler, method) in DiscoverMethods(model, compilation))
+                    foreach (var (pageHandler, method) in DiscoverMethods(model, disposableDispose))
                     {
-                        var methodParameters = DiscoverMethodParameters(method).ToList();
+                        var methodParameters = RouteDiscoverer.DiscoverMethodParameters(method).ToList();
                         var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
 
-                        var folder = GetAreaFolder(page, area);
+                        var folder = area.GetFolder(page.Folder);
                         folder.Pages.Add(new PageDescriptor(
                             area,
                             page.Page,
@@ -122,26 +125,6 @@ namespace UrlActionGenerator
             }
         }
 
-        private static IPagesFoldersDescriptor GetAreaFolder(PageData page, PageAreaDescriptor area)
-        {
-            var folders = page.Folder.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-
-            IPagesFoldersDescriptor currentFolder = area;
-            foreach (var folderName in folders)
-            {
-                var folder = currentFolder.Folders.FirstOrDefault(f => f.Name == folderName);
-                if (folder == null)
-                {
-                    folder = new PageFolderDescriptor(area, folderName);
-                    currentFolder.Folders.Add(folder);
-                }
-
-                currentFolder = folder;
-            }
-
-            return currentFolder;
-        }
-
         private static IEnumerable<string> EnumerateUpPath(string path)
         {
             while (!string.IsNullOrEmpty(path))
@@ -151,85 +134,18 @@ namespace UrlActionGenerator
             }
         }
 
-        internal static IEnumerable<ParameterDescriptor> DiscoverRouteParameters(string route)
-        {
-            if (string.IsNullOrEmpty(route))
-                yield break;
-
-            var matches = Regex.Matches(route, @"{([^}]+)}");
-
-            foreach (Match constraint in matches)
-            {
-                var match = Regex.Match(constraint.Groups[1].Value, @"^([^:?]+)((?::[^:?]+)*)(\?)?$");
-
-                var name = match.Groups[1].Value;
-                var constraints = match.Groups[2].Value.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                var nullable = match.Groups[3].Success;
-
-                yield return new ParameterDescriptor(
-                    name,
-                    GetConstraintParameterType(constraints) + (nullable ? "?" : ""),
-                    false,
-                    null);
-            }
-        }
-
-        private static INamedTypeSymbol _bindPropertyAttribute;
-        private static INamedTypeSymbol _fromQueryAttribute;
-        internal static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, Compilation compilation)
-        {
-            if (model == null) yield break;
-
-            _bindPropertyAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
-            _fromQueryAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
-
-            foreach (var member in model.GetMembers().OfType<IPropertySymbol>())
-            {
-                var attribute = member.GetAttributes().FirstOrDefault(attr =>
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _bindPropertyAttribute) ||
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _fromQueryAttribute));
-
-                if (attribute == null)
-                    continue;
-
-                if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, _bindPropertyAttribute))
-                {
-                    var supportsGet = attribute.NamedArguments.FirstOrDefault(arg => arg.Key == "SupportsGet").Value;
-                    if (supportsGet.Kind == TypedConstantKind.Error || ((bool)supportsGet.Value) != true)
-                        continue;
-                }
-
-                var nameArgument = attribute.NamedArguments.FirstOrDefault(arg => arg.Key == "Name").Value;
-                var parameterName = nameArgument.Kind == TypedConstantKind.Primitive
-                    ? (string)nameArgument.Value
-                    : member.Name;
-
-                yield return new ParameterDescriptor(
-                    parameterName,
-                    member.Type.GetTypeName(),
-                    true,
-                    null);
-            }
-        }
-
         private static readonly Regex _methodNameRegex = new Regex(@"^On(?:Get|Put|Post|Delete|Head|Options|Trace|Patch|Connect)(.+)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        internal static IEnumerable<(string PageHandler, IMethodSymbol Method)> DiscoverMethods(INamedTypeSymbol model, Compilation compilation)
+        internal static IEnumerable<(string PageHandler, IMethodSymbol Method)> DiscoverMethods(INamedTypeSymbol model, IMethodSymbol disposableDispose)
         {
             if (model == null)
             {
-                yield return (null, null);
+                yield return (null, null); // no model, but there is a .cshtml with @page
                 yield break;
             }
 
             foreach (var method in model.GetMembers().OfType<IMethodSymbol>())
             {
-                if (method.IsGenericMethod)
-                    continue;
-
-                if (method.MethodKind != MethodKind.Ordinary)
-                    continue;
-
-                if (method.DeclaredAccessibility != Accessibility.Public)
+                if (!PagesFacts.IsPageMethod(method, disposableDispose))
                     continue;
 
                 var match = _methodNameRegex.Match(method.Name);
@@ -243,49 +159,6 @@ namespace UrlActionGenerator
 
                 yield return (pageHandler, method);
             }
-        }
-
-        internal static IEnumerable<ParameterDescriptor> DiscoverMethodParameters(IMethodSymbol method)
-        {
-            if (method == null) yield break;
-
-            foreach (var param in method.Parameters)
-            {
-                yield return new ParameterDescriptor(
-                    param.Name,
-                    param.Type.GetTypeName(),
-                    param.HasExplicitDefaultValue,
-                    param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null);
-            }
-        }
-
-        private static string GetConstraintParameterType(string[] constraints)
-        {
-            var stringFunctions = new[] { "minlength(", "maxlength(", "length(", "regex(" };
-            var intFunctions = new[] { "range(", "min(", "max(" };
-
-            if (constraints.Length == 0 || (constraints.Length == 1 && constraints[0] == "")) return "string";
-
-            var type = (string)null;
-            foreach (var constraint in constraints)
-            {
-                if (constraint == "alpha")
-                    return "string";
-                if (stringFunctions.Any(fun => constraint.StartsWith(fun)))
-                    return "string";
-
-                if (intFunctions.Any(fun => constraint.StartsWith(fun)))
-                    type = "int";
-
-                if (constraint is "int" or "long" or "float" or "double" or "decimal" or "bool")
-                    return constraint;
-                if (constraint == "guid")
-                    return "System.Guid";
-                if (constraint == "datetime")
-                    return "System.DateTime";
-            }
-
-            return type ?? "string";
         }
     }
 }
