@@ -17,6 +17,14 @@ namespace UrlActionGenerator
 
             foreach (var param in methodSymbol.Parameters)
             {
+                if (param.Type.GetFullNamespacedName() == "Microsoft.AspNetCore.Http.IFormFile") // TODO: IEnumerable<IFormFile>
+                    continue;
+
+                if (param.Type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromFormAttribute" ||
+                                                                        attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromBodyAttribute" ||
+                                                                        attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"))
+                    continue;
+
                 yield return new ParameterDescriptor(
                     param.Name,
                     param.Type.GetTypeName(),
@@ -50,18 +58,21 @@ namespace UrlActionGenerator
 
         private static INamedTypeSymbol _bindPropertyAttribute;
         private static INamedTypeSymbol _fromQueryAttribute;
+        private static INamedTypeSymbol _fromRouteAttribute;
         public static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, Compilation compilation)
         {
             if (model == null) yield break;
 
             _bindPropertyAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
             _fromQueryAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
+            _fromRouteAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
 
             foreach (var member in model.GetMembers().OfType<IPropertySymbol>())
             {
                 var attribute = member.GetAttributes().FirstOrDefault(attr =>
                     SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _bindPropertyAttribute) ||
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _fromQueryAttribute));
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _fromQueryAttribute) ||
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _fromRouteAttribute));
 
                 if (attribute == null)
                     continue;
@@ -113,6 +124,29 @@ namespace UrlActionGenerator
             }
 
             return type ?? "string";
+        }
+
+        public static string DiscoverControllerName(INamedTypeSymbol controllerSymbol)
+        {
+            var controllerName = controllerSymbol.Name;
+            if (controllerName.EndsWith("Controller", StringComparison.OrdinalIgnoreCase))
+                controllerName = controllerName.Substring(0, controllerName.Length - "Controller".Length);
+
+            return controllerName;
+        }
+
+        public static string DiscoverActionName(IMethodSymbol methodSymbol)
+        {
+            var actionNameAttribute = methodSymbol.GetAttributes(inherit: true)
+                .SingleOrDefault(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ActionNameAttribute");
+            if (actionNameAttribute != null)
+                return (string)actionNameAttribute.ConstructorArguments.Single().Value;
+
+            var actionName = methodSymbol.Name;
+            if (actionName.EndsWith("Async", StringComparison.OrdinalIgnoreCase))
+                actionName = actionName.Substring(0, actionName.Length - "Async".Length);
+
+            return actionName;
         }
     }
 }

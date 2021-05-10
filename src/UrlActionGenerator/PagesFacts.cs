@@ -57,15 +57,13 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            if (!method.Name.StartsWith("OnGet", StringComparison.OrdinalIgnoreCase)
-                && !method.Name.StartsWith("OnPut", StringComparison.OrdinalIgnoreCase)
-                && !method.Name.StartsWith("OnPost", StringComparison.OrdinalIgnoreCase)
-                && !method.Name.StartsWith("OnDelete", StringComparison.OrdinalIgnoreCase)
+            if (!method.Name.StartsWith("OnDelete", StringComparison.OrdinalIgnoreCase)
+                && !method.Name.StartsWith("OnGet", StringComparison.OrdinalIgnoreCase)
                 && !method.Name.StartsWith("OnHead", StringComparison.OrdinalIgnoreCase)
                 && !method.Name.StartsWith("OnOptions", StringComparison.OrdinalIgnoreCase)
-                && !method.Name.StartsWith("OnTrace", StringComparison.OrdinalIgnoreCase)
                 && !method.Name.StartsWith("OnPatch", StringComparison.OrdinalIgnoreCase)
-                && !method.Name.StartsWith("OnConnect", StringComparison.OrdinalIgnoreCase))
+                && !method.Name.StartsWith("OnPost", StringComparison.OrdinalIgnoreCase)
+                && !method.Name.StartsWith("OnPut", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }

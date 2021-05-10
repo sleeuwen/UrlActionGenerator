@@ -143,6 +143,7 @@ namespace UrlActionGenerator
                 yield break;
             }
 
+            var seenDefaultMethod = false;
             foreach (var method in model.GetMembers().OfType<IMethodSymbol>())
             {
                 if (!PagesFacts.IsPageMethod(method, disposableDispose))
@@ -157,8 +158,14 @@ namespace UrlActionGenerator
                 if (string.IsNullOrWhiteSpace(pageHandler))
                     pageHandler = null;
 
+                if (pageHandler == null && method.Name.StartsWith("OnGet"))
+                    seenDefaultMethod = true;
+
                 yield return (pageHandler, method);
             }
+
+            if (!seenDefaultMethod)
+                yield return (null, null);
         }
     }
 }

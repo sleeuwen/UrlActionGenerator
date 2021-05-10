@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator.Descriptors;
@@ -9,7 +8,7 @@ using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator
 {
-    public static class MvcDiscoverer
+    internal static class MvcDiscoverer
     {
         public static IEnumerable<AreaDescriptor> DiscoverAreaControllerActions(Compilation compilation, List<TypeDeclarationSyntax> possibleControllers)
         {
@@ -39,16 +38,43 @@ namespace UrlActionGenerator
             }
         }
 
-        public static ControllerDescriptor DiscoverControllerActions(ITypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
+        private static readonly string[] RouteAttributeTypes = {
+            "Microsoft.AspNetCore.Mvc.RouteAttribute", "Microsoft.AspNetCore.Mvc.HttpDeleteAttribute",
+            "Microsoft.AspNetCore.Mvc.HttpGetAttribute", "Microsoft.AspNetCore.Mvc.HttpHeadAttribute",
+            "Microsoft.AspNetCore.Mvc.HttpOptionsAttribute", "Microsoft.AspNetCore.Mvc.HttpPatchAttribute",
+            "Microsoft.AspNetCore.Mvc.HttpPostAttribute", "Microsoft.AspNetCore.Mvc.HttpPutAttribute",
+        };
+        public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
         {
-            var controllerName = Regex.Replace(controllerSymbol.Name, "Controller$", "");
+            var controllerName = RouteDiscoverer.DiscoverControllerName(controllerSymbol);
             var controller = new ControllerDescriptor(area, controllerName);
+
+            var controllerRouteParameters = controllerSymbol.GetAttributes(inherit: true)
+                .Where(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.RouteAttribute")
+                .Select(attr => (string)attr.ConstructorArguments.Single().Value)
+                .ToList();
 
             foreach (var actionSymbol in DiscoverActions(controllerSymbol, disposableDispose))
             {
-                var actionName = Regex.Replace(actionSymbol.Name, "Async$", "");
+                var actionName = RouteDiscoverer.DiscoverActionName(actionSymbol);
                 var action = new ActionDescriptor(controller, actionName);
-                action.Parameters.AddRange(RouteDiscoverer.DiscoverMethodParameters(actionSymbol));
+
+                var routes = actionSymbol.GetAttributes(inherit: true)
+                    .Where(attr => RouteAttributeTypes.Contains(attr.AttributeClass.GetFullNamespacedName()) && attr.ConstructorArguments.Length == 1)
+                    .Select(attr => (string)attr.ConstructorArguments.Single().Value)
+                    .ToList();
+
+                var routeParameters = new KeyedCollection<ParameterDescriptor>(param => param.Name);
+                foreach (var parameter in routes.SelectMany(RouteDiscoverer.DiscoverRouteParameters))
+                    routeParameters.Add(parameter);
+                foreach (var parameter in controllerRouteParameters.SelectMany(RouteDiscoverer.DiscoverRouteParameters))
+                    routeParameters.Add(parameter);
+
+                var methodParameters = RouteDiscoverer.DiscoverMethodParameters(actionSymbol).ToList();
+                var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
+
+                action.Parameters.AddRange(routeParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase));
+                action.Parameters.AddRange(methodParameters);
 
                 controller.Actions.Add(action);
             }
@@ -56,7 +82,7 @@ namespace UrlActionGenerator
             return controller;
         }
 
-        public static IList<INamedTypeSymbol> DiscoverControllers(IEnumerable<ISymbol> symbols)
+        public static List<INamedTypeSymbol> DiscoverControllers(IEnumerable<ISymbol> symbols)
         {
             return symbols
                 .OfType<INamedTypeSymbol>()
@@ -65,7 +91,7 @@ namespace UrlActionGenerator
                 .ToList();
         }
 
-        public static IList<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, IMethodSymbol disposableDispose)
+        public static List<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, IMethodSymbol disposableDispose)
         {
             return controllerSymbol.GetMembers().OfType<IMethodSymbol>()
                 .Where(method => MvcFacts.IsControllerAction(method, disposableDispose))
