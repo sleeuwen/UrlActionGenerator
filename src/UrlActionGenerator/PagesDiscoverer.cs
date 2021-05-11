@@ -61,7 +61,7 @@ namespace UrlActionGenerator
             }
         }
 
-        private static List<PageData> DiscoverRazorPages(IEnumerable<AdditionalText> additionalFiles, Compilation compilation, AnalyzerConfigOptions configOptions)
+        private static List<RazorPageItem> DiscoverRazorPages(IEnumerable<AdditionalText> additionalFiles, Compilation compilation, AnalyzerConfigOptions configOptions)
         {
             // Discover .cshtml files in AdditionalFiles.
             var cshtmlFiles = additionalFiles
@@ -78,13 +78,13 @@ namespace UrlActionGenerator
 
             var pages = cshtmlFiles
                 .Where(PagesFacts.IsRazorPage)
-                .Select(file => new PageData(file))
+                .Select(file => new RazorPageItem(file))
                 .ToList();
 
             return pages;
         }
 
-        private static Dictionary<string, List<string>> GatherImplicitUsings(List<PageData> pages)
+        private static Dictionary<string, List<string>> GatherImplicitUsings(List<RazorPageItem> pages)
         {
             return pages
                 .Where(PagesFacts.IsImplicitlyIncludedFile)
@@ -92,30 +92,30 @@ namespace UrlActionGenerator
                 .ToDictionary(g => g.Key, g => g.SelectMany(PagesFacts.ExtractUsings).Distinct().ToList());
         }
 
-        private static INamedTypeSymbol GetPageModel(PageData page, Compilation compilation, Dictionary<string, List<string>> usingsByDirectory)
+        private static INamedTypeSymbol GetPageModel(RazorPageItem razorPage, Compilation compilation, Dictionary<string, List<string>> usingsByDirectory)
         {
-            if (page.Model == null)
+            if (razorPage.Model == null)
                 return null;
 
             // First try to get the page model based on the usings in this file
-            var explicitUsings = PagesFacts.ExtractUsings(page);
-            var pageModel = FindPageModel(compilation, page.Model, explicitUsings);
+            var explicitUsings = PagesFacts.ExtractUsings(razorPage);
+            var pageModel = FindPageModel(compilation, razorPage.Model, explicitUsings);
             if (pageModel != null)
                 return pageModel;
 
             // Walk up the path and try to get the page model based on usings in the implicitly included files
-            foreach (var path in EnumerateUpPath(page.AdditionalText.Path))
+            foreach (var path in EnumerateUpPath(razorPage.AdditionalText.Path))
             {
                 if (usingsByDirectory.TryGetValue(path, out var usings))
                 {
-                    pageModel = FindPageModel(compilation, page.Model, usings);
+                    pageModel = FindPageModel(compilation, razorPage.Model, usings);
                     if (pageModel != null)
                         return pageModel;
                 }
             }
 
             // Last try to get the page model based on what is in @model without a using
-            return FindPageModel(compilation, page.Model, new List<string> { "" });
+            return FindPageModel(compilation, razorPage.Model, new List<string> { "" });
 
             static INamedTypeSymbol FindPageModel(Compilation compilation, string model, IEnumerable<string> usings)
             {

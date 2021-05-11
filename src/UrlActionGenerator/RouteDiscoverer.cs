@@ -20,10 +20,14 @@ namespace UrlActionGenerator
                 if (param.Type.GetFullNamespacedName() == "Microsoft.AspNetCore.Http.IFormFile") // TODO: IEnumerable<IFormFile>
                     continue;
 
-                if (param.Type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromFormAttribute" ||
-                                                                        attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromBodyAttribute" ||
-                                                                        attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"))
+                var parameterAttributes = param.Type.GetAttributes(inherit: true);
+                if (parameterAttributes.Any(attr =>
+                    attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromFormAttribute"
+                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromBodyAttribute"
+                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"))
+                {
                     continue;
+                }
 
                 yield return new ParameterDescriptor(
                     param.Name,
@@ -56,28 +60,25 @@ namespace UrlActionGenerator
             }
         }
 
-        private static INamedTypeSymbol _bindPropertyAttribute;
-        private static INamedTypeSymbol _fromQueryAttribute;
-        private static INamedTypeSymbol _fromRouteAttribute;
         public static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, Compilation compilation)
         {
             if (model == null) yield break;
 
-            _bindPropertyAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
-            _fromQueryAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
-            _fromRouteAttribute ??= compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
+            var bindPropertyAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
+            var fromQueryAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
+            var fromRouteAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
 
             foreach (var member in model.GetMembers().OfType<IPropertySymbol>())
             {
                 var attribute = member.GetAttributes().FirstOrDefault(attr =>
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _bindPropertyAttribute) ||
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _fromQueryAttribute) ||
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, _fromRouteAttribute));
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, bindPropertyAttribute) ||
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromQueryAttribute) ||
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromRouteAttribute));
 
                 if (attribute == null)
                     continue;
 
-                if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, _bindPropertyAttribute))
+                if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindPropertyAttribute))
                 {
                     var supportsGet = attribute.NamedArguments.FirstOrDefault(arg => arg.Key == "SupportsGet").Value;
                     if (supportsGet.Kind == TypedConstantKind.Error || ((bool)supportsGet.Value) != true)

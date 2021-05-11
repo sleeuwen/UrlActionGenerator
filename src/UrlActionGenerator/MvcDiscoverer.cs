@@ -38,43 +38,20 @@ namespace UrlActionGenerator
             }
         }
 
-        private static readonly string[] RouteAttributeTypes = {
-            "Microsoft.AspNetCore.Mvc.RouteAttribute", "Microsoft.AspNetCore.Mvc.HttpDeleteAttribute",
-            "Microsoft.AspNetCore.Mvc.HttpGetAttribute", "Microsoft.AspNetCore.Mvc.HttpHeadAttribute",
-            "Microsoft.AspNetCore.Mvc.HttpOptionsAttribute", "Microsoft.AspNetCore.Mvc.HttpPatchAttribute",
-            "Microsoft.AspNetCore.Mvc.HttpPostAttribute", "Microsoft.AspNetCore.Mvc.HttpPutAttribute",
-        };
         public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
         {
             var controllerName = RouteDiscoverer.DiscoverControllerName(controllerSymbol);
             var controller = new ControllerDescriptor(area, controllerName);
-
-            var controllerRouteParameters = controllerSymbol.GetAttributes(inherit: true)
-                .Where(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.RouteAttribute")
-                .Select(attr => (string)attr.ConstructorArguments.Single().Value)
-                .ToList();
 
             foreach (var actionSymbol in DiscoverActions(controllerSymbol, disposableDispose))
             {
                 var actionName = RouteDiscoverer.DiscoverActionName(actionSymbol);
                 var action = new ActionDescriptor(controller, actionName);
 
-                var routes = actionSymbol.GetAttributes(inherit: true)
-                    .Where(attr => RouteAttributeTypes.Contains(attr.AttributeClass.GetFullNamespacedName()) && attr.ConstructorArguments.Length == 1)
-                    .Select(attr => (string)attr.ConstructorArguments.Single().Value)
-                    .ToList();
-
-                var routeParameters = new KeyedCollection<ParameterDescriptor>(param => param.Name);
-                foreach (var parameter in routes.SelectMany(RouteDiscoverer.DiscoverRouteParameters))
-                    routeParameters.Add(parameter);
-                foreach (var parameter in controllerRouteParameters.SelectMany(RouteDiscoverer.DiscoverRouteParameters))
-                    routeParameters.Add(parameter);
-
-                var methodParameters = RouteDiscoverer.DiscoverMethodParameters(actionSymbol).ToList();
-                var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
-
-                action.Parameters.AddRange(routeParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase));
-                action.Parameters.AddRange(methodParameters);
+                foreach (var parameter in RouteDiscoverer.DiscoverMethodParameters(actionSymbol))
+                {
+                    action.Parameters.Add(parameter);
+                }
 
                 controller.Actions.Add(action);
             }
@@ -87,7 +64,8 @@ namespace UrlActionGenerator
             return symbols
                 .OfType<INamedTypeSymbol>()
                 .Where(MvcFacts.IsController)
-                .Distinct() // partial classes register as duplicate symbols
+                .Distinct(SymbolEqualityComparer.Default) // partial classes register as duplicate symbols
+                .Cast<INamedTypeSymbol>()
                 .ToList();
         }
 
@@ -103,7 +81,7 @@ namespace UrlActionGenerator
             return symbol.GetAttributes(inherit: true)
                 .Where(IsAreaAttribute)
                 .Select(attr => (string)attr.ConstructorArguments.Single().Value)
-                .SingleOrDefault();
+                .SingleOrDefault() ?? "";
 
             static bool IsAreaAttribute(AttributeData attribute)
                 => attribute.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.AreaAttribute";

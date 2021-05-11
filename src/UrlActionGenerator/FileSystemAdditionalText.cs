@@ -21,7 +21,7 @@ namespace UrlActionGenerator
 
         public override string Path { get; }
 
-        public override SourceText? GetText(CancellationToken cancellationToken = default)
+        public override SourceText GetText(CancellationToken cancellationToken = default)
         {
             using var fileStream = File.OpenRead(System.IO.Path.Combine(_basePath, Path.TrimStart('/', '\\')));
             return SourceText.From(fileStream);

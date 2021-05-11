@@ -126,7 +126,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -155,7 +155,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -192,7 +192,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Equal(2, areas[0].Controllers.Count);
 
             Assert.Equal("Home", areas[0].Controllers[0].Name);
@@ -228,7 +228,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -289,7 +289,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -329,7 +329,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -370,7 +370,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -406,7 +406,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -446,7 +446,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Single(areas[0].Controllers[0].Actions);
@@ -489,7 +489,7 @@ namespace TestCode
             var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
 
             Assert.Single(areas);
-            Assert.Null(areas[0].Name);
+            Assert.Equal("", areas[0].Name);
             Assert.Single(areas[0].Controllers);
             Assert.Equal("Home", areas[0].Controllers[0].Name);
             Assert.Equal(2, areas[0].Controllers[0].Actions.Count);

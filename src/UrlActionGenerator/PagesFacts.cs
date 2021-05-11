@@ -79,16 +79,16 @@ namespace UrlActionGenerator
             return content.Contains("@page");
         }
 
-        public static bool IsImplicitlyIncludedFile(PageData page)
+        public static bool IsImplicitlyIncludedFile(RazorPageItem razorPage)
         {
-            return string.Equals(page.PageName, "_ViewStart", StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(page.PageName, "_ViewImports", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(razorPage.PageName, "_ViewStart", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(razorPage.PageName, "_ViewImports", StringComparison.OrdinalIgnoreCase);
         }
 
         private static readonly Regex _usingRe = new Regex(@"(?:^|\s)@using ([\w\.]+)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public static List<string> ExtractUsings(PageData page)
+        public static List<string> ExtractUsings(RazorPageItem razorPage)
         {
-            var content = page.AdditionalText.GetText().ToString();
+            var content = razorPage.AdditionalText.GetText().ToString();
 
             var usings = new List<string>();
             foreach (Match match in _usingRe.Matches(content))

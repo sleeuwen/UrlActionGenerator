@@ -28,11 +28,11 @@ namespace UrlActionGenerator.Descriptors
             }
         }
 
-        public void Clear() => throw new NotImplementedException();
+        public void Clear() => _source.Clear();
 
-        public bool Contains(TDescriptor item) => throw new NotImplementedException();
+        public bool Contains(TDescriptor item) => _keys.Contains(_keySelector(item));
 
-        public void CopyTo(TDescriptor[] array, int arrayIndex) => throw new NotImplementedException();
+        public void CopyTo(TDescriptor[] array, int arrayIndex) => _source.CopyTo(array, arrayIndex);
 
         public bool Remove(TDescriptor item) => throw new NotImplementedException();
 

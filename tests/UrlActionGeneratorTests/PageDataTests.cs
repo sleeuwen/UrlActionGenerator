@@ -17,7 +17,7 @@ namespace UrlActionGeneratorTests
         public void Area_ReturnsTheCorrectArea(string path, string expected)
         {
             var additionalText = new InMemoryAdditionalText(path, "");
-            var pageData = new PageData(additionalText);
+            var pageData = new RazorPageItem(additionalText);
 
             // Act
             var result = pageData.Area;
@@ -38,7 +38,7 @@ namespace UrlActionGeneratorTests
         public void Page_ReturnsTheCorrectPage(string path, string expectedPage, string expectedFolder, string expectedPageName)
         {
             var additionalText = new InMemoryAdditionalText(path, "");
-            var pageData = new PageData(additionalText);
+            var pageData = new RazorPageItem(additionalText);
 
             // Act
             var page = pageData.Page;
@@ -62,7 +62,7 @@ namespace UrlActionGeneratorTests
         public void Route_ReturnsTheCorrectRoute(string source, string expected)
         {
             var additionalText = new InMemoryAdditionalText("Index.cshtml", source);
-            var pageData = new PageData(additionalText);
+            var pageData = new RazorPageItem(additionalText);
 
             // Act
             var route = pageData.Route;
@@ -80,7 +80,7 @@ namespace UrlActionGeneratorTests
         public void Model_ReturnsTheCorrectModel(string source, string expected)
         {
             var additionalText = new InMemoryAdditionalText("Index.cshtml", source);
-            var pageData = new PageData(additionalText);
+            var pageData = new RazorPageItem(additionalText);
 
             // Act
             var model = pageData.Model;

@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 
 namespace UrlActionGenerator
 {
-    internal class PageData
+    internal class RazorPageItem
     {
         private readonly string[] _pathParts;
 
@@ -16,7 +16,7 @@ namespace UrlActionGenerator
         private string _sourceText;
         private string SourceText => _sourceText ??= AdditionalText.GetText().ToString();
 
-        public PageData(AdditionalText additionalText)
+        public RazorPageItem(AdditionalText additionalText)
         {
             _pathParts = additionalText.Path.Split('/', '\\');
             AdditionalText = additionalText;

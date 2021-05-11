@@ -4,7 +4,7 @@ namespace UrlActionGenerator.Descriptors
     {
         public AreaDescriptor(string name)
         {
-            Name = name;
+            Name = string.IsNullOrWhiteSpace(name) ? string.Empty : name;
             Controllers = new KeyedCollection<ControllerDescriptor>(controller => controller.Name);
         }
 

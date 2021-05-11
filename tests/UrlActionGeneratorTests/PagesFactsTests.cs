@@ -41,7 +41,7 @@ namespace UrlActionGeneratorTests
         public void IsImplicitlyIncludedFile(string path, bool expected)
         {
             var file = new InMemoryAdditionalText(path, "");
-            var pageData = new PageData(file);
+            var pageData = new RazorPageItem(file);
 
             // Act
             var result = PagesFacts.IsImplicitlyIncludedFile(pageData);
@@ -54,7 +54,7 @@ namespace UrlActionGeneratorTests
         public void ExtractUsings_ReturnsEmpty_WhenNoUsings()
         {
             var file = new InMemoryAdditionalText("", "");
-            var pageData = new PageData(file);
+            var pageData = new RazorPageItem(file);
 
             // Act
             var result = PagesFacts.ExtractUsings(pageData);
@@ -68,7 +68,7 @@ namespace UrlActionGeneratorTests
         {
             var file = new InMemoryAdditionalText("", @"@using System
 @using System.Text");
-            var pageData = new PageData(file);
+            var pageData = new RazorPageItem(file);
 
             // Act
             var result = PagesFacts.ExtractUsings(pageData);

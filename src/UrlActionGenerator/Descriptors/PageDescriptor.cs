@@ -9,7 +9,7 @@ namespace UrlActionGenerator.Descriptors
         {
             Area = area ?? throw new ArgumentNullException(nameof(area));
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            PageHandler = pageHandler;
+            PageHandler = string.IsNullOrWhiteSpace(pageHandler) ? null : pageHandler;
             Parameters = parameters ?? new List<ParameterDescriptor>();
         }
 

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace UrlActionGenerator.Descriptors
 {
     public interface IPagesFoldersDescriptor
