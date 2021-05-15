@@ -23,8 +23,6 @@ namespace UrlActionGenerator
 
             var usingsByDirectory = GatherImplicitUsings(pages);
 
-            var disposableDispose = (IMethodSymbol)compilation.GetSpecialType(SpecialType.System_IDisposable).GetMembers(nameof(IDisposable.Dispose)).First();
-
             foreach (var group in pages.GroupBy(page => page.Area))
             {
                 var area = new PageAreaDescriptor(group.Key);
@@ -39,7 +37,7 @@ namespace UrlActionGenerator
                     var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route).ToList();
                     routeParameters = routeParameters.ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
-                    foreach (var (pageHandler, method) in DiscoverMethods(model, disposableDispose))
+                    foreach (var (pageHandler, method) in DiscoverMethods(model))
                     {
                         var methodParameters = RouteDiscoverer.DiscoverMethodParameters(method).ToList();
                         var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
@@ -135,7 +133,7 @@ namespace UrlActionGenerator
         }
 
         private static readonly Regex _methodNameRegex = new Regex(@"^On(?:Get|Put|Post|Delete|Head|Options|Trace|Patch|Connect)(.+)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        internal static IEnumerable<(string PageHandler, IMethodSymbol Method)> DiscoverMethods(INamedTypeSymbol model, IMethodSymbol disposableDispose)
+        internal static IEnumerable<(string PageHandler, IMethodSymbol Method)> DiscoverMethods(INamedTypeSymbol model)
         {
             if (model == null)
             {
@@ -146,7 +144,7 @@ namespace UrlActionGenerator
             var seenDefaultMethod = false;
             foreach (var method in model.GetMembers().OfType<IMethodSymbol>())
             {
-                if (!PagesFacts.IsPageMethod(method, disposableDispose))
+                if (!PagesFacts.IsPageMethod(method))
                     continue;
 
                 var match = _methodNameRegex.Match(method.Name);

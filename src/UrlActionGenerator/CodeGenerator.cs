@@ -101,7 +101,7 @@ public class {className}
             foreach (var parameter in parameters)
             {
                 if (parameter.IsNullable && (!parameter.HasDefaultValue || parameter.DefaultValue == null))
-                    writer.Write($"{parameter.Name} == null ? default : ");
+                    writer.Write($"@{parameter.Name} == null ? default : ");
 
                 writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>({ScalarValue(parameter.Name)}, @{parameter.Name}),");
             }
@@ -126,7 +126,7 @@ public class {className}
             float f => f.ToString(CultureInfo.InvariantCulture),
             double d => d.ToString(CultureInfo.InvariantCulture),
             decimal dec => dec.ToString(CultureInfo.InvariantCulture),
-            var val => val.ToString(),
+            _ => "default",
         };
     }
 }

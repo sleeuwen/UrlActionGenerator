@@ -27,6 +27,9 @@
     <Compile Update="TestFiles\MvcFactsTests\IsControllerTests.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Update="TestFiles\PagesFactsTests\IsPageMethodTests.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
 
 </Project>

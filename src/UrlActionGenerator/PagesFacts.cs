@@ -9,7 +9,7 @@ namespace UrlActionGenerator
 {
     internal static class PagesFacts
     {
-        public static bool IsPageMethod(IMethodSymbol method, IMethodSymbol disposableDispose)
+        public static bool IsPageMethod(IMethodSymbol method)
         {
             if (method is null)
             {
@@ -43,11 +43,6 @@ namespace UrlActionGenerator
 
             // Overridden methods from Object class, e.g. Equals(Object), GetHashCode(), etc., are not valid.
             if (method.GetDeclaringType().SpecialType == SpecialType.System_Object)
-            {
-                return false;
-            }
-
-            if (IsIDisposableDispose(method, disposableDispose))
             {
                 return false;
             }
@@ -97,36 +92,6 @@ namespace UrlActionGenerator
             }
 
             return usings;
-        }
-
-        private static bool IsIDisposableDispose(IMethodSymbol method, IMethodSymbol disposableDispose)
-        {
-            if (method.Name != disposableDispose.Name)
-            {
-                return false;
-            }
-
-            if (!method.ReturnsVoid)
-            {
-                return false;
-            }
-
-            if (method.Parameters.Length != disposableDispose.Parameters.Length)
-            {
-                return false;
-            }
-
-            // Explicit implementation
-            for (var i = 0; i < method.ExplicitInterfaceImplementations.Length; i++)
-            {
-                if (method.ExplicitInterfaceImplementations[i].ContainingType.SpecialType == SpecialType.System_IDisposable)
-                {
-                    return true;
-                }
-            }
-
-            var implementedMethod = method.ContainingType.FindImplementationForInterfaceMember(disposableDispose);
-            return SymbolEqualityComparer.Default.Equals(implementedMethod, method);
         }
     }
 }
