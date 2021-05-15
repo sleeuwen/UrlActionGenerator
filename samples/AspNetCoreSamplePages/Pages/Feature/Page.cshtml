@@ -1,0 +1,7 @@
+@page
+@model AspNetCoreSamplePages.Pages.Feature.Page
+
+<h3>Hello @ViewData["message"]!</h3>
+
+<a href="@Url.Pages().Feature.Page(1, 20)">Default Handler</a>
+<a href="@Url.Pages().Feature.PageHandlers.Special()">Special Handler</a>

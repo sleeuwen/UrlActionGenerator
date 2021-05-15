@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator;
 using UrlActionGeneratorTests.TestFiles.MvcFactsTests;
 using Xunit;
@@ -15,6 +16,95 @@ namespace UrlActionGeneratorTests
     public class MvcFactsTests
     {
         private static readonly Type TestIsControllerActionType = typeof(TestIsControllerAction);
+
+        #region CanBeController
+        [Fact]
+        public void CanBeController_ReturnsFalseForInterfaces() => CanBeControllerReturnsFalse(typeof(ITestController));
+
+        [Fact]
+        public void CanBeController_ReturnsFalseForAbstractTypes() => CanBeControllerReturnsFalse(typeof(AbstractController));
+
+        [Fact]
+        public void CanBeController_ReturnsFalseForValueType() => CanBeControllerReturnsFalse(typeof(ValueTypeController));
+
+        [Fact]
+        public void CanBeController_ReturnsFalseForGenericType() => CanBeControllerReturnsFalse(typeof(OpenGenericController<>));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForPocoType() => CanBeControllerReturnsTrue(typeof(PocoType));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeDerivedFromPocoType() => CanBeControllerReturnsTrue(typeof(DerivedPocoType));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeDerivingFromController() => CanBeControllerReturnsTrue(typeof(TypeDerivingFromController));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeDerivingFromControllerBase() => CanBeControllerReturnsTrue(typeof(TypeDerivingFromControllerBase));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeDerivingFromController_WithoutSuffix() => CanBeControllerReturnsTrue(typeof(NoSuffix));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeWithSuffix_ThatIsNotDerivedFromController() => CanBeControllerReturnsTrue(typeof(PocoController));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeWithoutSuffix_WithControllerAttribute() => CanBeControllerReturnsTrue(typeof(CustomBase));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeDerivingFromCustomBaseThatHasControllerAttribute() => CanBeControllerReturnsTrue(typeof(ChildOfCustomBase));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypeWithNonControllerAttribute() => CanBeControllerReturnsTrue(typeof(BaseNonController));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypesDerivingFromTypeWithNonControllerAttribute() => CanBeControllerReturnsTrue(typeof(BasePocoNonControllerChildController));
+
+        [Fact]
+        public void CanBeController_ReturnsTrueForTypesDerivingFromTypeWithNonControllerAttributeWithControllerAttribute() =>
+            CanBeControllerReturnsTrue(typeof(ControllerAttributeDerivingFromNonController));
+
+        [Fact]
+        public void CanBeController_ReturnsFalseForInternalControllerType() => CanBeControllerReturnsFalse(typeof(InternalController));
+
+        [Fact]
+        public void CanBeController_ReturnsFalseForPrivateControllerType() => CanBeControllerReturnsFalse(typeof(PrivateController));
+
+        private void CanBeControllerReturnsFalse(Type type)
+        {
+            var compilation = GetIsControllerCompilation();
+            var syntaxTree = compilation.GetTypeByMetadataName(type.FullName).DeclaringSyntaxReferences.Single().SyntaxTree;
+
+            var typeName = type.IsGenericType ? type.Name.Substring(0, type.Name.IndexOf('`')) : type.Name;
+            var typeDeclarationSyntax = syntaxTree.GetRoot().DescendantNodes()
+                .OfType<TypeDeclarationSyntax>()
+                .First(node => node.Identifier.ToString() == typeName);
+
+            // Act
+            var canBeController = MvcFacts.CanBeController(typeDeclarationSyntax);
+
+            // Assert
+            Assert.False(canBeController);
+        }
+
+        private void CanBeControllerReturnsTrue(Type type)
+        {
+            var compilation = GetIsControllerCompilation();
+            var syntaxTree = compilation.GetTypeByMetadataName(type.FullName).DeclaringSyntaxReferences.Single().SyntaxTree;
+
+            var typeName = type.IsGenericType ? type.Name.Substring(0, type.Name.IndexOf('`')) : type.Name;
+            var typeDeclarationSyntax = syntaxTree.GetRoot().DescendantNodes()
+                .OfType<TypeDeclarationSyntax>()
+                .First(node => node.Identifier.ToString() == typeName);
+
+            // Act
+            var canBeController = MvcFacts.CanBeController(typeDeclarationSyntax);
+
+            // Assert
+            Assert.True(canBeController);
+        }
+
+        #endregion CanBeController
 
         #region IsController
         [Fact]
@@ -63,7 +153,7 @@ namespace UrlActionGeneratorTests
         public void IsController_ReturnsFalseForTypesDerivingFromTypeWithNonControllerAttributeWithControllerAttribute() =>
             IsControllerReturnsFalse(typeof(ControllerAttributeDerivingFromNonController));
 
-        private async void IsControllerReturnsFalse(Type type)
+        private void IsControllerReturnsFalse(Type type)
         {
             var compilation = GetIsControllerCompilation();
             var typeSymbol = compilation.GetTypeByMetadataName(type.FullName);
@@ -75,7 +165,7 @@ namespace UrlActionGeneratorTests
             Assert.False(isController);
         }
 
-        private async void IsControllerReturnsTrue(Type type)
+        private void IsControllerReturnsTrue(Type type)
         {
             var compilation = GetIsControllerCompilation();
             var typeSymbol = compilation.GetTypeByMetadataName(type.FullName);

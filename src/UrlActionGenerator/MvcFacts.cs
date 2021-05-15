@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator
 {
@@ -60,13 +61,13 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            if (type.HasAttribute("Microsoft.AspNetCore.Mvc.NonControllerAttribute", inherit: true))
+            if (type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonControllerAttribute"))
             {
                 return false;
             }
 
             var hasControllerSuffix = type.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase);
-            var hasControllerAttribute = type.HasAttribute("Microsoft.AspNetCore.Mvc.ControllerAttribute", inherit: true);
+            var hasControllerAttribute = type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ControllerAttribute");
 
             if (!hasControllerSuffix && !hasControllerAttribute)
             {
@@ -81,22 +82,6 @@ namespace UrlActionGenerator
             method = method ?? throw new ArgumentNullException(nameof(method));
 
             if (method.MethodKind != MethodKind.Ordinary)
-            {
-                return false;
-            }
-
-            if (method.HasAttribute("Microsoft.AspNetCore.Mvc.NonActionAttribute", inherit: true))
-            {
-                return false;
-            }
-
-            // Overridden methods from Object class, e.g. Equals(Object), GetHashCode(), etc., are not valid.
-            if (GetDeclaringType(method).SpecialType == SpecialType.System_Object)
-            {
-                return false;
-            }
-
-            if (IsIDisposableDispose(method, disposableDispose))
             {
                 return false;
             }
@@ -116,91 +101,28 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            return method.DeclaredAccessibility == Accessibility.Public;
-        }
-
-        private static bool HasAttribute(this ITypeSymbol typeSymbol, string attribute, bool inherit)
-            => GetAttributes(typeSymbol, attribute, inherit).Any();
-
-        private static bool HasAttribute(this IMethodSymbol methodSymbol, string attribute, bool inherit)
-            => GetAttributes(methodSymbol, attribute, inherit).Any();
-
-        private static IEnumerable<AttributeData> GetAttributes(this ISymbol symbol, string attribute)
-        {
-            foreach (var declaredAttribute in symbol.GetAttributes())
+            if (method.DeclaredAccessibility != Accessibility.Public)
             {
-                var fullName = GetFullName(declaredAttribute.AttributeClass);
-
-                if (fullName == attribute)
-                {
-                    yield return declaredAttribute;
-                }
-            }
-        }
-
-        private static IEnumerable<AttributeData> GetAttributes(this IMethodSymbol methodSymbol, string attribute, bool inherit)
-        {
-            attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
-
-            IMethodSymbol? current = methodSymbol;
-            while (current != null)
-            {
-                foreach (var attributeData in GetAttributes(current, attribute))
-                {
-                    yield return attributeData;
-                }
-
-                if (!inherit)
-                {
-                    break;
-                }
-
-                current = current.IsOverride ? current.OverriddenMethod : null;
-            }
-        }
-
-        private static IEnumerable<AttributeData> GetAttributes(this ITypeSymbol typeSymbol, string attribute, bool inherit)
-        {
-            typeSymbol = typeSymbol ?? throw new ArgumentNullException(nameof(typeSymbol));
-            attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
-
-            foreach (var type in GetTypeHierarchy(typeSymbol))
-            {
-                foreach (var attributeData in GetAttributes(type, attribute))
-                {
-                    yield return attributeData;
-                }
-
-                if (!inherit)
-                {
-                    break;
-                }
-            }
-        }
-
-        private static IEnumerable<ITypeSymbol> GetTypeHierarchy(this ITypeSymbol? typeSymbol)
-        {
-            while (typeSymbol != null)
-            {
-                yield return typeSymbol;
-
-                typeSymbol = typeSymbol.BaseType;
-            }
-        }
-
-        private static INamedTypeSymbol GetDeclaringType(IMethodSymbol method)
-        {
-            while (method.IsOverride)
-            {
-                if (method.OverriddenMethod is null)
-                {
-                    throw new ArgumentNullException(nameof(method.OverriddenMethod));
-                }
-
-                method = method.OverriddenMethod;
+                return false;
             }
 
-            return method.ContainingType;
+            // Overridden methods from Object class, e.g. Equals(Object), GetHashCode(), etc., are not valid.
+            if (method.GetDeclaringType().SpecialType == SpecialType.System_Object)
+            {
+                return false;
+            }
+
+            if (IsIDisposableDispose(method, disposableDispose))
+            {
+                return false;
+            }
+
+            if (method.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonActionAttribute"))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private static bool IsIDisposableDispose(IMethodSymbol method, IMethodSymbol disposableDispose)
@@ -232,12 +154,5 @@ namespace UrlActionGenerator
             var implementedMethod = method.ContainingType.FindImplementationForInterfaceMember(disposableDispose);
             return SymbolEqualityComparer.Default.Equals(implementedMethod, method);
         }
-
-        private static string GetFullName(INamespaceOrTypeSymbol typeSymbol) => typeSymbol switch
-        {
-            { Name: var name, ContainingNamespace: var @namespace } when @namespace is not null
-                => (GetFullName(@namespace) + "." + name).TrimStart('.'),
-            { Name: var name } => name,
-        };
     }
 }

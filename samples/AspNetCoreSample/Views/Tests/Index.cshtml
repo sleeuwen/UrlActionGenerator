@@ -1,0 +1,21 @@
+@using AspNetCoreSample.Controllers
+@{
+    ViewData["Title"] = "Tests Page";
+}
+
+<ul>
+    <li><a href="@Url.Actions().Tests.Index()">Index</a></li>
+    <li><a href="@Url.Actions().Tests.Parameters("str", 1)">Parameters</a></li>
+    <li><a href="@Url.Actions().Tests.DifferentActionName()">Custom Action Name</a></li>
+    @* <li><a href="@Url.Actions().Tests.RouteParameterOnly(2)">Route Parameter Only</a></li> *@
+    @* <li><a href="@Url.Actions().Tests.RouteParameterAndMethodParameter(2, "str")">Route Parameter And Method Parameter</a></li> *@
+    <li><a href="@Url.Actions().Tests.DuplicateRouteParameter(2)">Duplicate Route Parameter</a></li>
+    <li><a href="@Url.Actions().Tests.ComplexParameter(2, "str", new ComplexParameterModel { String = "str2", Model = new ComplexParameterModel.NestedModel { Int = 3 } })">Complex parameter</a></li>
+    <li>
+        <form action="@Url.Actions().Tests.PostComplexParameter(null)?model.string=str" method="post">
+            <input type="hidden" name="model.model.int" value="32" />
+            <a href="#" onclick="this.parentElement.submit()">Post Complex parameter</a>
+            @Url.Action("PostComplexParameter", "Tests", new { model = new ComplexParameterModel { String = "asdf" } })
+        </form>
+    </li>
+</ul>

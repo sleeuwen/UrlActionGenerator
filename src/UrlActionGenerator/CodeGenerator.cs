@@ -1,107 +1,76 @@
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using UrlActionGenerator.Descriptors;
 
 namespace UrlActionGenerator
 {
-    public static class CodeGenerator
+    public static partial class CodeGenerator
     {
-        public static void WriteUrlActions(IndentedTextWriter writer, List<AreaDescriptor> areas)
+        internal static void WriteLines(this IndentedTextWriter writer, string lines)
         {
-            writer.WriteLine("namespace Microsoft.AspNetCore.Mvc");
-            writer.WriteLine("{");
-            writer.Indent++;
-
-            writer.WriteLine("public static class UrlHelperExtensions");
-            writer.WriteLine("{");
-            writer.Indent++;
-
-
-            foreach (var area in areas)
+            foreach (var line in lines.TrimStart('\n', '\r').Split('\n'))
             {
-                WriteAreaActions(writer, area);
+                if (string.IsNullOrWhiteSpace(line))
+                    writer.WriteLineNoTabs("");
+                else
+                    writer.WriteLine(line.TrimEnd());
             }
-
-            writer.Indent--;
-            writer.WriteLine("}");
-            writer.Indent--;
-            writer.WriteLine("}");
         }
 
-        public static void WriteAreaActions(IndentedTextWriter writer, AreaDescriptor area)
+        internal static void WriteAreaClassStart(IndentedTextWriter writer, string className, string methodName)
         {
-            writer.WriteLine($"public static {area.Name}UrlActions {area.Name}Actions(this IUrlHelper urlHelper)");
-            writer.Indent++;
-            writer.WriteLine($"=> new {area.Name}UrlActions(urlHelper);");
-            writer.Indent--;
-            writer.WriteLineNoTabs("");
+            writer.WriteLines($@"
+public static {className} {methodName}(this IUrlHelper urlHelper)
+    => new {className}(urlHelper);
 
-            writer.WriteLine($"public class {area.Name}UrlActions");
-            writer.WriteLine("{");
-            writer.Indent++;
+public class {className}
+{{
+    private readonly IUrlHelper urlHelper;
+    public {className}(IUrlHelper urlHelper)
+    {{
+        this.urlHelper = urlHelper;
+    }}
+");
 
-            writer.WriteLine("private readonly IUrlHelper urlHelper;");
-            writer.WriteLine($"public {area.Name}UrlActions(IUrlHelper urlHelper)");
-            writer.WriteLine("{");
-            writer.Indent++;
-            writer.WriteLine("this.urlHelper = urlHelper;");
-            writer.Indent--;
-            writer.WriteLine("}\n");
+            writer.Indent += 1;
+        }
 
-            var first = true;
-            foreach (var controller in area.Controllers)
-            {
-                if (!first)
-                    writer.WriteLineNoTabs("");
-                first = false;
-
-                WriteControllerActions(writer, controller);
-            }
-
-            writer.Indent--;
+        internal static void WriteAreaClassEnd(IndentedTextWriter writer)
+        {
+            writer.Indent -= 1;
             writer.WriteLine("}\n");
         }
 
-        public static void WriteControllerActions(IndentedTextWriter writer, ControllerDescriptor controller)
+        internal static void WriteHelperClassStart(IndentedTextWriter writer, string className, string methodName)
         {
-            writer.WriteLine($"public {controller.Name}ControllerActions {controller.Name}");
-            writer.Indent++;
-            writer.WriteLine($"=> new {controller.Name}ControllerActions(urlHelper);");
-            writer.Indent--;
-            writer.WriteLineNoTabs("");
+            writer.WriteLines($@"
+public {className} {methodName}
+    => new {className}(urlHelper);
 
-            writer.WriteLine($"public class {controller.Name}ControllerActions");
-            writer.WriteLine("{");
-            writer.Indent++;
+public class {className}
+{{
+    private readonly IUrlHelper urlHelper;
+    public {className}(IUrlHelper urlHelper)
+    {{
+        this.urlHelper = urlHelper;
+    }}
+");
 
-            writer.WriteLine("private readonly IUrlHelper urlHelper;");
-            writer.WriteLine($"public {controller.Name}ControllerActions(IUrlHelper urlHelper)");
-            writer.WriteLine("{");
-            writer.Indent++;
-            writer.WriteLine("this.urlHelper = urlHelper;");
-            writer.Indent--;
-            writer.WriteLine("}");
-            writer.WriteLineNoTabs("");
-
-            var first = true;
-            foreach (var action in controller.Actions)
-            {
-                if (!first)
-                    writer.WriteLineNoTabs("");
-                first = false;
-
-                WriteAction(writer, action);
-            }
-
-            writer.Indent--;
-            writer.WriteLine("}");
+            writer.Indent += 1;
         }
 
-        public static void WriteAction(IndentedTextWriter writer, ActionDescriptor action)
+        internal static void WriteHelperClassEnd(IndentedTextWriter writer)
         {
-            writer.Write($"public string {action.Name}(");
+            writer.Indent -= 1;
+            writer.WriteLine("}\n");
+        }
 
+        internal static void WriteMethodParameters(TextWriter writer, IEnumerable<ParameterDescriptor> parameters)
+        {
             var first = true;
-            foreach (var parameter in action.Parameters)
+            foreach (var parameter in parameters)
             {
                 if (!first)
                     writer.Write(", ");
@@ -114,22 +83,50 @@ namespace UrlActionGenerator
                 if (parameter.HasDefaultValue)
                 {
                     writer.Write(" = ");
-                    writer.Write(parameter.DefaultValue?.ToString() ?? "null");
+                    writer.Write(ScalarValue(parameter.DefaultValue));
                 }
             }
+        }
 
-            writer.WriteLine(")");
+        internal static void WriteRouteValues(IndentedTextWriter writer, IEnumerable<ParameterDescriptor> parameters, IEnumerable<KeyValuePair<string, object>> extras)
+        {
+            writer.WriteLine("var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {");
             writer.Indent++;
 
-            writer.Write($@"=> urlHelper.Action(""{action.Name}"", ""{action.Controller.Name}"", new {{ area = ""{action.Controller.Area.Name}""");
-
-            foreach (var parameter in action.Parameters)
+            foreach (var kv in extras)
             {
-                writer.Write($", @{parameter.Name}");
+                writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>(\"{kv.Key}\", {ScalarValue(kv.Value ?? "")}),");
             }
 
-            writer.WriteLine(" });");
+            foreach (var parameter in parameters)
+            {
+                if (parameter.IsNullable && (!parameter.HasDefaultValue || parameter.DefaultValue == null))
+                    writer.Write($"@{parameter.Name} == null ? default : ");
+
+                writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>({ScalarValue(parameter.Name)}, @{parameter.Name}),");
+            }
+
             writer.Indent--;
+            writer.WriteLine("});");
         }
+
+        internal static string ScalarValue(object value) => value switch
+        {
+            null => "default",
+            string str => $"\"{str.Replace("\"", "\\\"")}\"",
+            bool b => b.ToString().ToLowerInvariant(),
+            byte by => by.ToString(CultureInfo.InvariantCulture),
+            sbyte sby => sby.ToString(CultureInfo.InvariantCulture),
+            short s => s.ToString(CultureInfo.InvariantCulture),
+            ushort us => us.ToString(CultureInfo.InvariantCulture),
+            int i => i.ToString(CultureInfo.InvariantCulture),
+            uint ui => ui.ToString(CultureInfo.InvariantCulture),
+            long l => l.ToString(CultureInfo.InvariantCulture),
+            ulong ul => ul.ToString(CultureInfo.InvariantCulture),
+            float f => f.ToString(CultureInfo.InvariantCulture),
+            double d => d.ToString(CultureInfo.InvariantCulture),
+            decimal dec => dec.ToString(CultureInfo.InvariantCulture),
+            _ => "default",
+        };
     }
 }
