@@ -87,6 +87,7 @@ namespace Microsoft.AspNetCore.Mvc
                     });
                     return urlHelper.Action(""Index"", ""Home"", __routeValues);
                 }
+
             }
 
         }
@@ -175,6 +176,7 @@ namespace Microsoft.AspNetCore.Mvc
                     });
                     return urlHelper.Action(""Index"", ""Home"", __routeValues);
                 }
+
             }
 
         }

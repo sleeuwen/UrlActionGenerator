@@ -31,13 +31,8 @@ namespace Microsoft.AspNetCore.Mvc
         {
             CodeGenerator.WriteAreaClassStart(writer, $"{area.Name}UrlActions", $"{area.Name}Actions");
 
-            var first = true;
             foreach (var controller in area.Controllers)
             {
-                if (!first)
-                    writer.WriteLineNoTabs("");
-                first = false;
-
                 WriteControllerActions(writer, controller);
             }
 
@@ -48,13 +43,8 @@ namespace Microsoft.AspNetCore.Mvc
         {
             CodeGenerator.WriteHelperClassStart(writer, $"{controller.Name}ControllerActions", controller.Name);
 
-            var first = true;
             foreach (var action in controller.Actions)
             {
-                if (!first)
-                    writer.WriteLineNoTabs("");
-                first = false;
-
                 WriteAction(writer, action);
             }
 
@@ -74,7 +64,7 @@ namespace Microsoft.AspNetCore.Mvc
             writer.WriteLine($@"return urlHelper.Action(""{action.Name}"", ""{action.Controller.Name}"", __routeValues);");
 
             writer.Indent--;
-            writer.WriteLine("}");
+            writer.WriteLine("}\n");
         }
     }
 }
