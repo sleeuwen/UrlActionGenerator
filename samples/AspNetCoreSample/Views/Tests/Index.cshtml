@@ -7,8 +7,8 @@
     <li><a href="@Url.Actions().Tests.Index()">Index</a></li>
     <li><a href="@Url.Actions().Tests.Parameters("str", 1)">Parameters</a></li>
     <li><a href="@Url.Actions().Tests.DifferentActionName()">Custom Action Name</a></li>
-    <li><a href="@Url.Actions().Tests.RouteParameterOnly(2)">Route Parameter Only</a></li>
-    <li><a href="@Url.Actions().Tests.RouteParameterAndMethodParameter(2, "str")">Route Parameter And Method Parameter</a></li>
+    @* <li><a href="@Url.Actions().Tests.RouteParameterOnly(2)">Route Parameter Only</a></li> *@
+    @* <li><a href="@Url.Actions().Tests.RouteParameterAndMethodParameter(2, "str")">Route Parameter And Method Parameter</a></li> *@
     <li><a href="@Url.Actions().Tests.DuplicateRouteParameter(2)">Duplicate Route Parameter</a></li>
     <li><a href="@Url.Actions().Tests.ComplexParameter(2, "str", new ComplexParameterModel { String = "str2", Model = new ComplexParameterModel.NestedModel { Int = 3 } })">Complex parameter</a></li>
     <li>
