@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Xml;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator.Descriptors;
 using UrlActionGenerator.Extensions;
 
@@ -14,6 +17,8 @@ namespace UrlActionGenerator
         {
             if (methodSymbol is null)
                 yield break;
+
+            var parameterDescriptions = DiscoverMethodParameterDescriptions(methodSymbol);
 
             foreach (var param in methodSymbol.Parameters)
             {
@@ -29,11 +34,95 @@ namespace UrlActionGenerator
                     continue;
                 }
 
+                var paramDescription = parameterDescriptions.TryGetValue(param.Name, out var description)
+                    ? description
+                    : null;
+
                 yield return new ParameterDescriptor(
                     param.Name,
                     param.Type.GetTypeName(),
                     param.HasExplicitDefaultValue,
-                    param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null);
+                    param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null,
+                    paramDescription);
+            }
+        }
+
+        private static Dictionary<string, string> DiscoverMethodParameterDescriptions(IMethodSymbol methodSymbol)
+        {
+            var parameterDescriptions = new Dictionary<string, string>();
+
+            foreach (var location in methodSymbol.Locations)
+            {
+                var methodDeclaration = location.SourceTree.GetRoot().FindNode(location.SourceSpan);
+                if (!methodDeclaration.HasLeadingTrivia)
+                    continue;
+
+                var trivia = methodDeclaration.GetLeadingTrivia();
+
+                foreach (var (paramName, comment) in ExtractCommentTriviaParamComments(trivia))
+                {
+                    parameterDescriptions[paramName] = comment;
+                }
+
+                foreach (var (paramName, comment) in ExtractStructuredTriviaParamComments(trivia))
+                {
+                    parameterDescriptions[paramName] = comment;
+                }
+            }
+
+            return parameterDescriptions;
+        }
+
+        private static IEnumerable<(string Name, string Comment)> ExtractStructuredTriviaParamComments(SyntaxTriviaList triviaList)
+        {
+            var structuredTrivia = triviaList.Where(x => x.HasStructure);
+            if (!structuredTrivia.Any())
+                yield break;
+
+            foreach (var trivia in structuredTrivia)
+            {
+                var paramElements = trivia.GetStructure()
+                    ?.ChildNodes().OfType<XmlElementSyntax>()
+                    .Where(x => x.StartTag.Name.ToString() == "param") ?? Enumerable.Empty<XmlElementSyntax>();
+
+                foreach (var paramElement in paramElements)
+                {
+                    var nameAttribute = paramElement.StartTag.Attributes.FirstOrDefault(x => x.Name.ToString() == "name") as XmlNameAttributeSyntax;
+
+                    var paramName = nameAttribute.Identifier.ToString();
+                    var comment = paramElement.Content.FirstOrDefault()?.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(paramName))
+                    {
+                        yield return (paramName, comment);
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<(string Name, string Comment)> ExtractCommentTriviaParamComments(SyntaxTriviaList triviaList)
+        {
+            var commentTrivia = triviaList.Where(x => x.IsKind(SyntaxKind.SingleLineCommentTrivia));
+            if (!commentTrivia.Any())
+                yield break;
+
+            var commentString = string.Join("\n", commentTrivia.Select(x => x.ToString().TrimStart('/').Trim()));
+            if (!commentString.Contains("<param"))
+                yield break;
+
+            var doc = new XmlDocument();
+            doc.LoadXml($"<root>{commentString}</root>");
+
+            var paramNodes = doc.SelectNodes("/root/param[@name]");
+            foreach (XmlElement paramNode in paramNodes)
+            {
+                var nameAttribute = paramNode.Attributes.OfType<XmlAttribute>().First(x => x.Name == "name");
+
+                var paramName = nameAttribute.Value;
+                var comment = paramNode.InnerText;
+
+                if (!string.IsNullOrWhiteSpace(paramName))
+                    yield return (paramName, comment);
             }
         }
 
@@ -56,6 +145,7 @@ namespace UrlActionGenerator
                     name,
                     GetConstraintParameterType(constraints) + (nullable ? "?" : ""),
                     false,
+                    null,
                     null);
             }
         }
@@ -94,7 +184,8 @@ namespace UrlActionGenerator
                     parameterName,
                     member.Type.GetTypeName(),
                     true,
-                    null);
+                    null,
+                    null); // TODO: Member summary xml doc
             }
         }
 

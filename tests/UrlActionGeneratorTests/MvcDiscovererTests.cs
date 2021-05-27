@@ -525,9 +525,48 @@ namespace TestCode
             Assert.Empty(areas);
         }
 
+        [Fact]
+        public void DiscoverAreaControllerActions_ActionParameterDescription()
+        {
+            var compilation = CreateCompilation(@"
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+
+namespace TestCode
+{
+    public class HomeController : Controller
+    {
+        /// <summary>The Index Method</summary>
+        /// <param name=""search"">Search term</param>
+        /// <param name=""page"">The page number</param>
+        public IActionResult Index(string search, int page)
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            Assert.Single(areas);
+            Assert.Equal("", areas[0].Name);
+            Assert.Single(areas[0].Controllers);
+            Assert.Equal("Home", areas[0].Controllers[0].Name);
+            Assert.Single(areas[0].Controllers[0].Actions);
+            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
+            Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
+
+            Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("Search term", areas[0].Controllers[0].Actions.Single().Parameters[0].Description);
+
+            Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
+            Assert.Equal("The page number", areas[0].Controllers[0].Actions.Single().Parameters[1].Description);
+        }
+
         private static Compilation CreateCompilation(string source)
             => CSharpCompilation.Create("compilation",
-                new[] { CSharpSyntaxTree.ParseText(source) },
+                new[] { CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(documentationMode: DocumentationMode.None)) },
                 new[]
                 {
                     MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location),

@@ -392,8 +392,8 @@ public class HomeControllerActions
             var area = new AreaDescriptor("");
             var controller = new ControllerDescriptor(area, "Home");
             var action = new ActionDescriptor(controller, "List");
-            action.Parameters.Add(new ParameterDescriptor("search", "string", false, null));
-            action.Parameters.Add(new ParameterDescriptor("page", "int", false, null));
+            action.Parameters.Add(new ParameterDescriptor("search", "string", false, null, null));
+            action.Parameters.Add(new ParameterDescriptor("page", "int", false, null, null));
 
             // Act
             CodeGenerator.WriteAction(_writer, action);
@@ -418,8 +418,8 @@ public class HomeControllerActions
             var area = new AreaDescriptor("");
             var controller = new ControllerDescriptor(area, "Home");
             var action = new ActionDescriptor(controller, "List");
-            action.Parameters.Add(new ParameterDescriptor("search", "string", true, "term\""));
-            action.Parameters.Add(new ParameterDescriptor("page", "int", true, 1));
+            action.Parameters.Add(new ParameterDescriptor("search", "string", true, "term\"", null));
+            action.Parameters.Add(new ParameterDescriptor("page", "int", true, 1, null));
 
             // Act
             CodeGenerator.WriteAction(_writer, action);

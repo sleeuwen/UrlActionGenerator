@@ -53,6 +53,7 @@ namespace Microsoft.AspNetCore.Mvc
 
         public static void WriteAction(IndentedTextWriter writer, ActionDescriptor action)
         {
+            CodeGenerator.WriteMethodDoc(writer, action);
             writer.Write($"public string {action.Name}(");
             CodeGenerator.WriteMethodParameters(writer, action.Parameters);
             writer.WriteLine(")");

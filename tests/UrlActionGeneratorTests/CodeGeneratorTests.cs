@@ -89,7 +89,7 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string", false, null),
+                new ParameterDescriptor("param", "string", false, null, null),
             }, Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
@@ -110,7 +110,7 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string", true, "str"),
+                new ParameterDescriptor("param", "string", true, "str", null),
             }, Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
@@ -131,7 +131,7 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string?", true, null),
+                new ParameterDescriptor("param", "string?", true, null, null),
             }, Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
@@ -152,7 +152,7 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string?", true, null),
+                new ParameterDescriptor("param", "string?", true, null, null),
             }, new[]
             {
                 new KeyValuePair<string, object>("area", ""),

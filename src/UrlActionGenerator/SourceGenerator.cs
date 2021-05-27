@@ -90,7 +90,7 @@ namespace UrlActionGenerator
             {
                 try
                 {
-                    File.AppendAllText("/home/stephan/Urls.txt", compilation.AssemblyName + ":\t" + message.Trim() + "\n");
+                    File.AppendAllText("/home/stephan/Urls.txt", (compilation?.AssemblyName ?? "unknown") + ":\t" + message.Trim() + "\n");
                 }
                 catch (Exception)
                 {

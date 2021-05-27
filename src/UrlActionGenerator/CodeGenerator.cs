@@ -67,6 +67,14 @@ public class {className}
             writer.WriteLine("}\n");
         }
 
+        internal static void WriteMethodDoc(TextWriter writer, ActionDescriptor actionDescriptor)
+        {
+            foreach (var parameter in actionDescriptor.Parameters)
+            {
+                writer.WriteLine($@"/// <param name=""{parameter.Name}"">{parameter.Description}</param>");
+            }
+        }
+
         internal static void WriteMethodParameters(TextWriter writer, IEnumerable<ParameterDescriptor> parameters)
         {
             var first = true;

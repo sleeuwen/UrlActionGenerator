@@ -19,6 +19,7 @@ namespace AspNetCoreSample.Controllers
             return View();
         }
 
+        /// <param name="return">The user to greets</param>
         public IActionResult Greeting(string @return)
         {
             return View("Greeting", @return);
