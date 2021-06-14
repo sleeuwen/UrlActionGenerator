@@ -2,6 +2,8 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using Microsoft.CodeAnalysis;
 using UrlActionGenerator.Descriptors;
 
 namespace UrlActionGenerator
@@ -69,6 +71,12 @@ public class {className}
 
         internal static void WriteMethodDoc(TextWriter writer, ActionDescriptor actionDescriptor)
         {
+            if (actionDescriptor.Symbol == null && actionDescriptor.Parameters.All(param => string.IsNullOrEmpty(param.Description)))
+                return;
+
+            if (actionDescriptor.Symbol != null)
+                writer.WriteLine(@$"/// <summary>Generate a URL for <see cref=""{actionDescriptor.Symbol.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{actionDescriptor.Symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}"">{actionDescriptor.Controller.Symbol.Name}.{actionDescriptor.Name}</see>.</summary>");
+
             foreach (var parameter in actionDescriptor.Parameters)
             {
                 writer.WriteLine($@"/// <param name=""{parameter.Name}"">{parameter.Description}</param>");

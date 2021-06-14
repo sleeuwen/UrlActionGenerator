@@ -41,12 +41,12 @@ namespace UrlActionGenerator
         public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
         {
             var controllerName = RouteDiscoverer.DiscoverControllerName(controllerSymbol);
-            var controller = new ControllerDescriptor(area, controllerName);
+            var controller = new ControllerDescriptor(area, controllerName, controllerSymbol);
 
             foreach (var actionSymbol in DiscoverActions(controllerSymbol, disposableDispose))
             {
                 var actionName = RouteDiscoverer.DiscoverActionName(actionSymbol);
-                var action = new ActionDescriptor(controller, actionName);
+                var action = new ActionDescriptor(controller, actionName, actionSymbol);
 
                 foreach (var parameter in RouteDiscoverer.DiscoverMethodParameters(actionSymbol))
                 {

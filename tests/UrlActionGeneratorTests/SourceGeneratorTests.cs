@@ -80,6 +80,7 @@ namespace Microsoft.AspNetCore.Mvc
                     this.urlHelper = urlHelper;
                 }
 
+                /// <summary>Generate a URL for <see cref=""global::TestCode.HomeController.Index"">HomeController.Index</see>.</summary>
                 public string Index()
                 {
                     var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
@@ -168,6 +169,8 @@ namespace Microsoft.AspNetCore.Mvc
                     this.urlHelper = urlHelper;
                 }
 
+                /// <summary>Generate a URL for <see cref=""global::TestCode.HomeController.Index"">HomeController.Index</see>.</summary>
+                /// <param name=""return""></param>
                 public string Index(string @return)
                 {
                     var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {

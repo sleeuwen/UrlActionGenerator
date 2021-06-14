@@ -171,7 +171,7 @@ public class CustomUrlActions
         public void WriteAreaActions_SingleController()
         {
             var area = new AreaDescriptor("Custom");
-            area.Controllers.Add(new ControllerDescriptor(area, "Home"));
+            area.Controllers.Add(new ControllerDescriptor(area, "Home", null));
 
             // Act
             CodeGenerator.WriteAreaActions(_writer, area);
@@ -210,8 +210,8 @@ public class CustomUrlActions
         public void WriteAreaActions_MultiController()
         {
             var area = new AreaDescriptor("Custom");
-            area.Controllers.Add(new ControllerDescriptor(area, "Home"));
-            area.Controllers.Add(new ControllerDescriptor(area, "Contact"));
+            area.Controllers.Add(new ControllerDescriptor(area, "Home", null));
+            area.Controllers.Add(new ControllerDescriptor(area, "Contact", null));
 
             // Act
             CodeGenerator.WriteAreaActions(_writer, area);
@@ -263,7 +263,7 @@ public class CustomUrlActions
         public void WriteControllerActions_NoAction()
         {
             var area = new AreaDescriptor("");
-            var controller = new ControllerDescriptor(area, "Home");
+            var controller = new ControllerDescriptor(area, "Home", null);
 
             // Act
             CodeGenerator.WriteControllerActions(_writer, controller);
@@ -289,8 +289,8 @@ public class HomeControllerActions
         public void WriteControllerActions_SingleAction()
         {
             var area = new AreaDescriptor("");
-            var controller = new ControllerDescriptor(area, "Home");
-            controller.Actions.Add(new ActionDescriptor(controller, "Index"));
+            var controller = new ControllerDescriptor(area, "Home", null);
+            controller.Actions.Add(new ActionDescriptor(controller, "Index", null));
 
             // Act
             CodeGenerator.WriteControllerActions(_writer, controller);
@@ -324,9 +324,9 @@ public class HomeControllerActions
         public void WriteControllerActions_MultiAction()
         {
             var area = new AreaDescriptor("");
-            var controller = new ControllerDescriptor(area, "Home");
-            controller.Actions.Add(new ActionDescriptor(controller, "Index"));
-            controller.Actions.Add(new ActionDescriptor(controller, "Contact"));
+            var controller = new ControllerDescriptor(area, "Home", null);
+            controller.Actions.Add(new ActionDescriptor(controller, "Index", null));
+            controller.Actions.Add(new ActionDescriptor(controller, "Contact", null));
 
             // Act
             CodeGenerator.WriteControllerActions(_writer, controller);
@@ -368,8 +368,8 @@ public class HomeControllerActions
         public void WriteAction_Simple()
         {
             var area = new AreaDescriptor("");
-            var controller = new ControllerDescriptor(area, "Home");
-            var action = new ActionDescriptor(controller, "Index");
+            var controller = new ControllerDescriptor(area, "Home", null);
+            var action = new ActionDescriptor(controller, "Index", null);
 
             // Act
             CodeGenerator.WriteAction(_writer, action);
@@ -390,8 +390,8 @@ public class HomeControllerActions
         public void WriteAction_WithParameters()
         {
             var area = new AreaDescriptor("");
-            var controller = new ControllerDescriptor(area, "Home");
-            var action = new ActionDescriptor(controller, "List");
+            var controller = new ControllerDescriptor(area, "Home", null);
+            var action = new ActionDescriptor(controller, "List", null);
             action.Parameters.Add(new ParameterDescriptor("search", "string", false, null, null));
             action.Parameters.Add(new ParameterDescriptor("page", "int", false, null, null));
 
@@ -416,8 +416,8 @@ public class HomeControllerActions
         public void WriteAction_WithParametersDefaultValue()
         {
             var area = new AreaDescriptor("");
-            var controller = new ControllerDescriptor(area, "Home");
-            var action = new ActionDescriptor(controller, "List");
+            var controller = new ControllerDescriptor(area, "Home", null);
+            var action = new ActionDescriptor(controller, "List", null);
             action.Parameters.Add(new ParameterDescriptor("search", "string", true, "term\"", null));
             action.Parameters.Add(new ParameterDescriptor("page", "int", true, 1, null));
 
