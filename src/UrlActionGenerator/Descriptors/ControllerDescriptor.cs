@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using SymbolDisplayFormat = Microsoft.CodeAnalysis.SymbolDisplayFormat;
 
 namespace UrlActionGenerator.Descriptors
 {
@@ -9,7 +10,7 @@ namespace UrlActionGenerator.Descriptors
         {
             Area = area ?? throw new ArgumentNullException(nameof(area));
             Name = controllerName ?? throw new ArgumentNullException(nameof(controllerName));
-            Actions = new KeyedCollection<ActionDescriptor>(action => new { action.Name, Parameters = string.Join(",", action.Parameters.Select(param => param.Type.TrimEnd('?'))) });
+            Actions = new KeyedCollection<ActionDescriptor>(action => new { action.Name, Parameters = string.Join(",", action.Parameters.Select(param => param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))) });
         }
 
         public AreaDescriptor Area { get; }

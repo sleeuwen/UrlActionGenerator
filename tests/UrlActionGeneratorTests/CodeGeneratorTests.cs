@@ -52,7 +52,7 @@ namespace UrlActionGeneratorTests
             // Assert
             var routeValuesCode = stringWriter.ToString();
             routeValuesCode.Should().Be(@"
-var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
+var __routeValues = global::Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new global::System.Collections.Generic.KeyValuePair<string, object>[] {
 });
 ".TrimStart());
         }
@@ -73,9 +73,9 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Assert
             var routeValuesCode = stringWriter.ToString();
             routeValuesCode.Should().Be(@"
-var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
-    new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-    new System.Collections.Generic.KeyValuePair<string, object>(""controller"", ""Home""),
+var __routeValues = global::Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new global::System.Collections.Generic.KeyValuePair<string, object>[] {
+    new global::System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
+    new global::System.Collections.Generic.KeyValuePair<string, object>(""controller"", ""Home""),
 });
 ".TrimStart());
         }
@@ -89,14 +89,14 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string", false, null),
+                new ParameterDescriptor("param", TestCompilation.Default.GetTypeByMetadataName("System.String"), false, null),
             }, Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
             var routeValuesCode = stringWriter.ToString();
             routeValuesCode.Should().Be(@"
-var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
-    new System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
+var __routeValues = global::Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new global::System.Collections.Generic.KeyValuePair<string, object>[] {
+    new global::System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
 });
 ".TrimStart());
         }
@@ -110,14 +110,14 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string", true, "str"),
+                new ParameterDescriptor("param", TestCompilation.Default.GetTypeByMetadataName("System.String"), true, "str"),
             }, Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
             var routeValuesCode = stringWriter.ToString();
             routeValuesCode.Should().Be(@"
-var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
-    new System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
+var __routeValues = global::Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new global::System.Collections.Generic.KeyValuePair<string, object>[] {
+    new global::System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
 });
 ".TrimStart());
         }
@@ -131,14 +131,14 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string?", true, null),
+                new ParameterDescriptor("param", TestCompilation.Default.GetTypeByMetadataName("System.Nullable`1").Construct(TestCompilation.Default.GetTypeByMetadataName("System.String")), true, null),
             }, Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
             var routeValuesCode = stringWriter.ToString();
             routeValuesCode.Should().Be(@"
-var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
-    @param == null ? default : new System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
+var __routeValues = global::Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new global::System.Collections.Generic.KeyValuePair<string, object>[] {
+    @param == null ? default : new global::System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
 });
 ".TrimStart());
         }
@@ -152,7 +152,7 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Act
             CodeGenerator.WriteRouteValues(writer, new[]
             {
-                new ParameterDescriptor("param", "string?", true, null),
+                new ParameterDescriptor("param", TestCompilation.Default.GetTypeByMetadataName("System.Nullable`1").Construct(TestCompilation.Default.GetTypeByMetadataName("System.String")), true, null),
             }, new[]
             {
                 new KeyValuePair<string, object>("area", ""),
@@ -161,9 +161,9 @@ var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(
             // Assert
             var routeValuesCode = stringWriter.ToString();
             routeValuesCode.Should().Be(@"
-var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {
-    new System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
-    @param == null ? default : new System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
+var __routeValues = global::Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new global::System.Collections.Generic.KeyValuePair<string, object>[] {
+    new global::System.Collections.Generic.KeyValuePair<string, object>(""area"", """"),
+    @param == null ? default : new global::System.Collections.Generic.KeyValuePair<string, object>(""param"", @param),
 });
 ".TrimStart());
         }

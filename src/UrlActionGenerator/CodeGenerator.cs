@@ -8,6 +8,15 @@ namespace UrlActionGenerator
 {
     public static partial class CodeGenerator
     {
+        public static class Types
+        {
+            public static readonly string IUrlHelper = "global::Microsoft.AspNetCore.Mvc.IUrlHelper";
+            public static readonly string RouteValueDictionary = "global::Microsoft.AspNetCore.Routing.RouteValueDictionary";
+            public static readonly string RouteValuePair = "global::System.Collections.Generic.KeyValuePair<string, object>";
+        }
+
+        private static readonly string _generatedCodeAttribute = $"global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"{typeof(SourceGenerator).Assembly.GetName().Name}\", \"{typeof(SourceGenerator).Assembly.GetName().Version}\")";
+
         internal static void WriteLines(this IndentedTextWriter writer, string lines)
         {
             foreach (var line in lines.TrimStart('\n', '\r').Split('\n'))
@@ -22,13 +31,13 @@ namespace UrlActionGenerator
         internal static void WriteAreaClassStart(IndentedTextWriter writer, string className, string methodName)
         {
             writer.WriteLines($@"
-public static {className} {methodName}(this IUrlHelper urlHelper)
+public static {className} {methodName}(this {Types.IUrlHelper} urlHelper)
     => new {className}(urlHelper);
 
 public class {className}
 {{
-    private readonly IUrlHelper urlHelper;
-    public {className}(IUrlHelper urlHelper)
+    private readonly {Types.IUrlHelper} urlHelper;
+    public {className}({Types.IUrlHelper} urlHelper)
     {{
         this.urlHelper = urlHelper;
     }}
@@ -51,8 +60,8 @@ public {className} {methodName}
 
 public class {className}
 {{
-    private readonly IUrlHelper urlHelper;
-    public {className}(IUrlHelper urlHelper)
+    private readonly {Types.IUrlHelper} urlHelper;
+    public {className}({Types.IUrlHelper} urlHelper)
     {{
         this.urlHelper = urlHelper;
     }}
@@ -90,12 +99,12 @@ public class {className}
 
         internal static void WriteRouteValues(IndentedTextWriter writer, IEnumerable<ParameterDescriptor> parameters, IEnumerable<KeyValuePair<string, object>> extras)
         {
-            writer.WriteLine("var __routeValues = Microsoft.AspNetCore.Routing.RouteValueDictionary.FromArray(new System.Collections.Generic.KeyValuePair<string, object>[] {");
+            writer.WriteLine($"var __routeValues = {Types.RouteValueDictionary}.FromArray(new {Types.RouteValuePair}[] {{");
             writer.Indent++;
 
             foreach (var kv in extras)
             {
-                writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>(\"{kv.Key}\", {ScalarValue(kv.Value ?? "")}),");
+                writer.WriteLine($"new {Types.RouteValuePair}(\"{kv.Key}\", {ScalarValue(kv.Value ?? "")}),");
             }
 
             foreach (var parameter in parameters)
@@ -103,7 +112,7 @@ public class {className}
                 if (parameter.IsNullable && (!parameter.HasDefaultValue || parameter.DefaultValue == null))
                     writer.Write($"@{parameter.Name} == null ? default : ");
 
-                writer.WriteLine($"new System.Collections.Generic.KeyValuePair<string, object>({ScalarValue(parameter.Name)}, @{parameter.Name}),");
+                writer.WriteLine($"new {Types.RouteValuePair}({ScalarValue(parameter.Name)}, @{parameter.Name}),");
             }
 
             writer.Indent--;

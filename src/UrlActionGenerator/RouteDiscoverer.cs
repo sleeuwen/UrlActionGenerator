@@ -31,13 +31,13 @@ namespace UrlActionGenerator
 
                 yield return new ParameterDescriptor(
                     param.Name,
-                    param.Type.GetTypeName(),
+                    param.Type,
                     param.HasExplicitDefaultValue,
                     param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null);
             }
         }
 
-        public static IEnumerable<ParameterDescriptor> DiscoverRouteParameters(string route)
+        public static IEnumerable<ParameterDescriptor> DiscoverRouteParameters(string route, Compilation compilation)
         {
             if (string.IsNullOrEmpty(route))
                 yield break;
@@ -52,9 +52,15 @@ namespace UrlActionGenerator
                 var constraints = match.Groups[2].Value.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                 var nullable = match.Groups[3].Success;
 
+                var parameterTypeString = GetConstraintParameterType(constraints);
+                var parameterType = compilation.GetTypeByMetadataName(parameterTypeString);
+
+                if (nullable)
+                    parameterType = compilation.GetTypeByMetadataName("System.Nullable`1").Construct(parameterType);
+
                 yield return new ParameterDescriptor(
                     name,
-                    GetConstraintParameterType(constraints) + (nullable ? "?" : ""),
+                    parameterType,
                     false,
                     null);
             }
@@ -92,7 +98,7 @@ namespace UrlActionGenerator
 
                 yield return new ParameterDescriptor(
                     parameterName,
-                    member.Type.GetTypeName(),
+                    member.Type,
                     true,
                     null);
             }
@@ -109,22 +115,33 @@ namespace UrlActionGenerator
             foreach (var constraint in constraints)
             {
                 if (constraint == "alpha")
-                    return "string";
+                    return "System.String";
                 if (stringFunctions.Any(fun => constraint.StartsWith(fun)))
-                    return "string";
+                    return "System.String";
 
                 if (intFunctions.Any(fun => constraint.StartsWith(fun)))
-                    type = "int";
+                    type = "System.Int32";
+
+                if (constraint is "guid")
+                    return "System.Guid";
+                if (constraint is "datetime")
+                    return "System.DateTime";
 
                 if (constraint is "int" or "long" or "float" or "double" or "decimal" or "bool")
-                    return constraint;
-                if (constraint == "guid")
-                    return "System.Guid";
-                if (constraint == "datetime")
-                    return "System.DateTime";
+                {
+                    return constraint switch
+                    {
+                        "int" => "System.Int32",
+                        "long" => "System.Int64",
+                        "float" => "System.Single",
+                        "double" => "System.Double",
+                        "Decimal" => "System.Decimal",
+                        "bool" => "System.Boolean",
+                    };
+                }
             }
 
-            return type ?? "string";
+            return type ?? "System.String";
         }
 
         public static string DiscoverControllerName(INamedTypeSymbol controllerSymbol)

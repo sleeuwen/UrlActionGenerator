@@ -297,12 +297,12 @@ namespace TestCode
             Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
 
             Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("string", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(TestCompilation.Default.GetTypeByMetadataName("System.String"), areas[0].Controllers[0].Actions.Single().Parameters[0].Type));
             Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
             Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
 
             Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
-            Assert.Equal("int", areas[0].Controllers[0].Actions.Single().Parameters[1].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(TestCompilation.Default.GetTypeByMetadataName("System.Int32"), areas[0].Controllers[0].Actions.Single().Parameters[1].Type));
             Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
             Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[1].DefaultValue);
         }
@@ -337,12 +337,12 @@ namespace TestCode
             Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
 
             Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("string", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(TestCompilation.Default.GetTypeByMetadataName("System.String"), areas[0].Controllers[0].Actions.Single().Parameters[0].Type));
             Assert.True(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
             Assert.Equal("", areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
 
             Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
-            Assert.Equal("int", areas[0].Controllers[0].Actions.Single().Parameters[1].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(TestCompilation.Default.GetTypeByMetadataName("System.Int32"), areas[0].Controllers[0].Actions.Single().Parameters[1].Type));
             Assert.True(areas[0].Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
             Assert.Equal(1, areas[0].Controllers[0].Actions.Single().Parameters[1].DefaultValue);
         }
@@ -378,7 +378,7 @@ namespace TestCode
             Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
 
             Assert.Equal("parameter", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(TestCompilation.Default.GetTypeByMetadataName("System.Collections.Generic.List`1[System.Collections.Generic.Dictionary`2[System.String, System.String]]"), areas[0].Controllers[0].Actions.Single().Parameters[0].Type));
             Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
             Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
@@ -414,7 +414,7 @@ namespace TestCode
             Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
 
             Assert.Equal("strings", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("string[]", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(TestCompilation.Default.GetTypeByMetadataName("System.String[]"), areas[0].Controllers[0].Actions.Single().Parameters[0].Type));
             Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
             Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
@@ -454,7 +454,7 @@ namespace TestCode
             Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
 
             Assert.Equal("param", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("TestCode.HomeController.NestedClass", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(SymbolEqualityComparer.Default.Equals(compilation.GetTypeByMetadataName("TestCode.HomeController.NestedClass"), areas[0].Controllers[0].Actions.Single().Parameters[0].Type));
             Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
             Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using SymbolDisplayFormat = Microsoft.CodeAnalysis.SymbolDisplayFormat;
 
 namespace UrlActionGenerator.Descriptors
 {
@@ -8,7 +9,7 @@ namespace UrlActionGenerator.Descriptors
         public PageAreaDescriptor(string name)
         {
             Name = name;
-            Pages = new KeyedCollection<PageDescriptor>(page => new { page.Name, page.PageHandler, Parameters = string.Join(",", page.Parameters.Select(param => param.Type.TrimEnd('?'))) });
+            Pages = new KeyedCollection<PageDescriptor>(page => new { page.Name, page.PageHandler, Parameters = string.Join(",", page.Parameters.Select(param => param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))) });
             Folders = new KeyedCollection<PageFolderDescriptor>(folder => folder.Name);
         }
 

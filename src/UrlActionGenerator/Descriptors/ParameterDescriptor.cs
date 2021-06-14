@@ -1,11 +1,12 @@
 using System;
+using Microsoft.CodeAnalysis;
 using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator.Descriptors
 {
     public class ParameterDescriptor
     {
-        public ParameterDescriptor(string name, string type, bool hasDefaultValue, object defaultValue)
+        public ParameterDescriptor(string name, ITypeSymbol type, bool hasDefaultValue, object defaultValue)
         {
             Name = name?.ToCamelCase() ?? throw new ArgumentNullException(nameof(name));
             Type = type ?? throw new ArgumentNullException(nameof(type));
@@ -15,9 +16,9 @@ namespace UrlActionGenerator.Descriptors
 
         public string Name { get; }
 
-        public string Type { get; }
+        public ITypeSymbol Type { get; }
 
-        public bool IsNullable => Type.EndsWith("?");
+        public bool IsNullable => Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).EndsWith("?");
 
         public bool HasDefaultValue { get; }
 

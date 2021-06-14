@@ -34,7 +34,7 @@ namespace UrlActionGenerator
                     var modelParameters = RouteDiscoverer.DiscoverModelParameters(model, compilation).ToList();
                     var modelParameterNames = modelParameters.Select(param => param.Name).ToList();
 
-                    var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route).ToList();
+                    var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route, compilation).ToList();
                     routeParameters = routeParameters.ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
                     foreach (var (pageHandler, method) in DiscoverMethods(model))

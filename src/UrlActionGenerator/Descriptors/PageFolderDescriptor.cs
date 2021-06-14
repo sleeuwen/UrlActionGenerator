@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 
 namespace UrlActionGenerator.Descriptors
 {
@@ -9,7 +10,7 @@ namespace UrlActionGenerator.Descriptors
         {
             Area = area ?? throw new ArgumentNullException(nameof(area));
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            Pages = new KeyedCollection<PageDescriptor>(page => new { page.Name, page.PageHandler, Parameters = string.Join(",", page.Parameters.Select(param => param.Type.TrimEnd('?'))) });
+            Pages = new KeyedCollection<PageDescriptor>(page => new { page.Name, page.PageHandler, Parameters = string.Join(",", page.Parameters.Select(param => param.Type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat))) });
             Folders = new KeyedCollection<PageFolderDescriptor>(folder => folder.Name);
         }
 
