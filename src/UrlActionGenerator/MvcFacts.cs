@@ -28,6 +28,9 @@ namespace UrlActionGenerator
             if (classSyntax.TypeParameterList?.Parameters.Count > 0)
                 return false;
 
+            if (classSyntax.AttributeLists.Count == 0 && classSyntax.BaseList?.Types.Count is null or 0)
+                return false;
+
             return true;
         }
 
