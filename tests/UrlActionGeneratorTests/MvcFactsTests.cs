@@ -31,7 +31,7 @@ namespace UrlActionGeneratorTests
         public void CanBeController_ReturnsFalseForGenericType() => CanBeControllerReturnsFalse(typeof(OpenGenericController<>));
 
         [Fact]
-        public void CanBeController_ReturnsTrueForPocoType() => CanBeControllerReturnsTrue(typeof(PocoType));
+        public void CanBeController_ReturnsFalseForPocoType() => CanBeControllerReturnsFalse(typeof(PocoType));
 
         [Fact]
         public void CanBeController_ReturnsTrueForTypeDerivedFromPocoType() => CanBeControllerReturnsTrue(typeof(DerivedPocoType));
@@ -46,7 +46,7 @@ namespace UrlActionGeneratorTests
         public void CanBeController_ReturnsTrueForTypeDerivingFromController_WithoutSuffix() => CanBeControllerReturnsTrue(typeof(NoSuffix));
 
         [Fact]
-        public void CanBeController_ReturnsTrueForTypeWithSuffix_ThatIsNotDerivedFromController() => CanBeControllerReturnsTrue(typeof(PocoController));
+        public void CanBeController_ReturnsFalseForTypeWithSuffix_ThatIsNotDerivedFromController() => CanBeControllerReturnsFalse(typeof(PocoController));
 
         [Fact]
         public void CanBeController_ReturnsTrueForTypeWithoutSuffix_WithControllerAttribute() => CanBeControllerReturnsTrue(typeof(CustomBase));
