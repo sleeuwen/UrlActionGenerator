@@ -37,8 +37,10 @@ namespace TestCode.Pages
             var additionalFiles = new[] { new InMemoryAdditionalText("/Pages/Index.cshtml", @"@page ""{pageNumber}""
 @model TestCode.Pages.Index") };
 
+            var compilationContext = new CompilationContext(compilation);
+
             // Act
-            var pages = PagesDiscoverer.DiscoverAreaPages(compilation, additionalFiles, null).ToList();
+            var pages = PagesDiscoverer.DiscoverAreaPages(compilationContext, additionalFiles, null).ToList();
 
             // Assert
             compilation.GetDiagnostics().Should().HaveCount(0);

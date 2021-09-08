@@ -70,6 +70,9 @@ namespace UrlActionGeneratorTests
         [Fact]
         public void CanBeController_ReturnsFalseForPrivateControllerType() => CanBeControllerReturnsFalse(typeof(PrivateController));
 
+        [Fact]
+        public void CanBeController_ReturnsFalseForNestedControllerType() => CanBeControllerReturnsFalse(typeof(ParentClass.NestedController));
+
         private void CanBeControllerReturnsFalse(Type type)
         {
             var compilation = GetIsControllerCompilation();

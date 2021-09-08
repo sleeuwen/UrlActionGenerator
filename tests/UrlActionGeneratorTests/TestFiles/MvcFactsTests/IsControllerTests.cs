@@ -47,4 +47,9 @@ namespace UrlActionGeneratorTests.TestFiles.MvcFactsTests
     internal class InternalController : Controller { }
 
     class PrivateController : Controller { }
+
+    public class ParentClass
+    {
+        public class NestedController : Controller { }
+    }
 }

@@ -21,7 +21,9 @@ namespace UrlActionGenerator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            if (AssemblyFacts.IsRazorViewsAssembly(context.Compilation.Assembly))
+            var syntaxReceiver = context.SyntaxContextReceiver as MySyntaxReceiver;
+            var isRazorViewsAssembly = AssemblyFacts.IsRazorViewsAssembly(context.Compilation.AssemblyName, syntaxReceiver.AssemblyAttributes, context.Compilation);
+            if (isRazorViewsAssembly)
                 return;
 
             CodeGenMvc(context);
@@ -30,14 +32,14 @@ namespace UrlActionGenerator
 
         private static void CodeGenMvc(GeneratorExecutionContext context)
         {
-            var syntaxReceiver = (MySyntaxReceiver)context.SyntaxReceiver;
+            var syntaxReceiver = (MySyntaxReceiver)context.SyntaxContextReceiver;
 
             var sw = Stopwatch.StartNew();
 
             Log(context.Compilation, "MVC");
             try
             {
-                var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation, syntaxReceiver.PossibleControllers).ToList();
+                var areas = MvcDiscoverer.DiscoverAreaControllerActions(syntaxReceiver).ToList();
 
                 using var sourceWriter = new StringWriter();
                 using var writer = new IndentedTextWriter(sourceWriter, "    ");
@@ -63,7 +65,8 @@ namespace UrlActionGenerator
             Log(context.Compilation, "Razor Pages");
             try
             {
-                var pages = PagesDiscoverer.DiscoverAreaPages(context.Compilation, context.AdditionalFiles, context.AnalyzerConfigOptions.GlobalOptions).ToList();
+                var compilationContext = new CompilationContext(context.Compilation);
+                var pages = PagesDiscoverer.DiscoverAreaPages(compilationContext, context.AdditionalFiles, context.AnalyzerConfigOptions.GlobalOptions).ToList();
 
                 using var sourceWriter = new StringWriter();
                 using var writer = new IndentedTextWriter(sourceWriter, "    ");

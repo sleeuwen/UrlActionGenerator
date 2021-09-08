@@ -60,25 +60,21 @@ namespace UrlActionGenerator
             }
         }
 
-        public static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, Compilation compilation)
+        public static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, CompilationContext context)
         {
             if (model == null) yield break;
-
-            var bindPropertyAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
-            var fromQueryAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
-            var fromRouteAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
 
             foreach (var member in model.GetMembers().OfType<IPropertySymbol>())
             {
                 var attribute = member.GetAttributes().FirstOrDefault(attr =>
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, bindPropertyAttribute) ||
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromQueryAttribute) ||
-                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromRouteAttribute));
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, context.BindPropertyAttribute) ||
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, context.FromQueryAttribute) ||
+                    SymbolEqualityComparer.Default.Equals(attr.AttributeClass, context.FromRouteAttribute));
 
                 if (attribute == null)
                     continue;
 
-                if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindPropertyAttribute))
+                if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, context.BindPropertyAttribute))
                 {
                     var supportsGet = attribute.NamedArguments.FirstOrDefault(arg => arg.Key == "SupportsGet").Value;
                     if (supportsGet.Kind == TypedConstantKind.Error || ((bool)supportsGet.Value) != true)
@@ -139,9 +135,9 @@ namespace UrlActionGenerator
         public static string DiscoverActionName(IMethodSymbol methodSymbol)
         {
             var actionNameAttribute = methodSymbol.GetAttributes(inherit: true)
-                .SingleOrDefault(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ActionNameAttribute");
+                .FirstOrDefault(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ActionNameAttribute");
             if (actionNameAttribute != null)
-                return (string)actionNameAttribute.ConstructorArguments.Single().Value;
+                return (string)actionNameAttribute.ConstructorArguments.First().Value;
 
             var actionName = methodSymbol.Name;
             if (actionName.EndsWith("Async", StringComparison.OrdinalIgnoreCase))

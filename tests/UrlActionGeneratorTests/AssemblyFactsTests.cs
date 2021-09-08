@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator;
 using Xunit;
 
@@ -16,8 +18,14 @@ namespace UrlActionGeneratorTests
         {
             var compilation = CreateCompilation("AspNetCoreSample");
 
+            var assemblyAttributes = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes())
+                .OfType<AttributeListSyntax>()
+                .Where(attr => attr.Target?.Identifier.ToString() == "assembly")
+                .SelectMany(attr => attr.Attributes)
+                .ToList();
+
             // Act
-            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.Assembly);
+            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.AssemblyName, assemblyAttributes, compilation);
 
             // Assert
             Assert.False(result);
@@ -28,8 +36,14 @@ namespace UrlActionGeneratorTests
         {
             var compilation = CreateCompilation("AspNetCoreSample.Views");
 
+            var assemblyAttributes = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes())
+                .OfType<AttributeListSyntax>()
+                .Where(attr => attr.Target?.Identifier.ToString() == "assembly")
+                .SelectMany(attr => attr.Attributes)
+                .ToList();
+
             // Act
-            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.Assembly);
+            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.AssemblyName, assemblyAttributes, compilation);
 
             // Assert
             Assert.False(result);
@@ -43,8 +57,14 @@ namespace UrlActionGeneratorTests
             var source = $@"[assembly: global::Microsoft.AspNetCore.Mvc.ApplicationParts.ProvideApplicationPartFactoryAttribute({typeInfo})]";
             var compilation = CreateCompilation("AspNetCoreSample.Views", source);
 
+            var assemblyAttributes = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes())
+                .OfType<AttributeListSyntax>()
+                .Where(attr => attr.Target?.Identifier.ToString() == "assembly")
+                .SelectMany(attr => attr.Attributes)
+                .ToList();
+
             // Act
-            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.Assembly);
+            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.AssemblyName, assemblyAttributes, compilation);
 
             // Assert
             Assert.False(result);
@@ -56,8 +76,14 @@ namespace UrlActionGeneratorTests
             var source = @"[assembly: global::Microsoft.AspNetCore.Mvc.ApplicationParts.ProvideApplicationPartFactoryAttribute(""Microsoft.AspNetCore.Mvc.ApplicationParts.CompiledRazorAssemblyApplicationPartFactory, Microsoft.AspNetCore.Mvc.Razor"")]";
             var compilation = CreateCompilation("AspNetCoreSample.Views", source);
 
+            var assemblyAttributes = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes())
+                .OfType<AttributeListSyntax>()
+                .Where(attr => attr.Target?.Identifier.ToString() == "assembly")
+                .SelectMany(attr => attr.Attributes)
+                .ToList();
+
             // Act
-            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.Assembly);
+            var result = AssemblyFacts.IsRazorViewsAssembly(compilation.AssemblyName, assemblyAttributes, compilation);
 
             // Assert
             Assert.True(result);

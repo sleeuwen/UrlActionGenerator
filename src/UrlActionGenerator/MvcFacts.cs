@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -24,6 +23,9 @@ namespace UrlActionGenerator
             var isPublic = classSyntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PublicKeyword));
             if (!isPublic)
                 return false;
+
+            if (classSyntax.Parent is ClassDeclarationSyntax)
+                return false; // Exclude nested classes
 
             if (classSyntax.TypeParameterList?.Parameters.Count > 0)
                 return false;
@@ -64,13 +66,14 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            if (type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonControllerAttribute"))
+            var typeAttributes = type.GetAttributes(inherit: true).ToList();
+            if (typeAttributes.Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonControllerAttribute"))
             {
                 return false;
             }
 
             var hasControllerSuffix = type.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase);
-            var hasControllerAttribute = type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ControllerAttribute");
+            var hasControllerAttribute = typeAttributes.Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ControllerAttribute");
 
             if (!hasControllerSuffix && !hasControllerAttribute)
             {
