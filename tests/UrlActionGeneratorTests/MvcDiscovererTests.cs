@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.CodeAnalysis;
@@ -525,6 +527,40 @@ namespace TestCode
             Assert.Empty(areas);
         }
 
+
+
+        [Fact]
+        public void DiscoverAreaControllerActions_ExcludedParameterTypes()
+        {
+            var compilation = CreateCompilation(@"
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+
+namespace TestCode
+{
+    public class HomeController : Controller
+    {
+        public IActionResult Index(int id, IFormFile file, IFormFile[] fileArray, List<IFormFile> listOfFiles, ICollection<IFormFile> collectionOfFiles, IEnumerable<IFormFile> enumerableOfFiles, CancellationToken requestAborted)
+        {
+            return View();
+        }
+    }
+}");
+
+            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
+            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+
+            areas.Should().ContainSingle();
+            areas[0].Controllers.Should().ContainSingle().Which.Name.Should().Be("Home");
+            areas[0].Controllers[0].Actions.Should().ContainSingle().Which.Name.Should().Be("Index");
+
+            var action = areas[0].Controllers[0].Actions[0];
+            action.Parameters.Should().ContainSingle().Which.Name.Should().Be("id");
+        }
+
         private static Compilation CreateCompilation(string source)
             => CSharpCompilation.Create("compilation",
                 new[] { CSharpSyntaxTree.ParseText(source) },
@@ -541,6 +577,7 @@ namespace TestCode
                     MetadataReference.CreateFromFile(typeof(AreaAttribute).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(RouteValueAttribute).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(IUrlHelper).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(IFormFile).Assembly.Location),
                 },
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
     }

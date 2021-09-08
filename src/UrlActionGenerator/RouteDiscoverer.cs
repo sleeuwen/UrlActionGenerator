@@ -17,7 +17,9 @@ namespace UrlActionGenerator
 
             foreach (var param in methodSymbol.Parameters)
             {
-                if (param.Type.GetFullNamespacedName() == "Microsoft.AspNetCore.Http.IFormFile") // TODO: IEnumerable<IFormFile>
+                var baseType = GetParameterBaseType(param.Type);
+
+                if (IsExcludedType(baseType))
                     continue;
 
                 var parameterAttributes = param.Type.GetAttributes(inherit: true);
@@ -35,6 +37,33 @@ namespace UrlActionGenerator
                     param.HasExplicitDefaultValue,
                     param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null);
             }
+        }
+
+        private static List<string> _listTypes = new() {"System.Collections.Generic.List<T>", "System.Collections.Generic.IList<T>", "System.Collections.Generic.ICollection<T>", "System.Collections.Generic.IEnumerable<T>"};
+        private static ITypeSymbol GetParameterBaseType(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol arrayType)
+                return arrayType.ElementType;
+
+            if (type.IsSystemNullable())
+                return ((INamedTypeSymbol) type).TypeArguments[0];
+
+            if (_listTypes.Contains(type.OriginalDefinition?.ToString()))
+                return ((INamedTypeSymbol) type).TypeArguments[0];
+
+            return type;
+        }
+
+        private static bool IsExcludedType(ITypeSymbol type)
+        {
+            var typeName = type.GetFullNamespacedName();
+
+            if (typeName == "Microsoft.AspNetCore.Http.IFormFile")
+                return true;
+            if (typeName == "System.Threading.CancellationToken")
+                return true;
+
+            return false;
         }
 
         public static IEnumerable<ParameterDescriptor> DiscoverRouteParameters(string route)

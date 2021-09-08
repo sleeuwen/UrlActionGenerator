@@ -16,7 +16,26 @@ namespace UrlActionGenerator
     {
         public void Initialize(GeneratorInitializationContext context)
         {
+            context.RegisterForPostInitialization(PostInitialize);
             context.RegisterForSyntaxNotifications(() => new MySyntaxReceiver());
+        }
+
+        public static void PostInitialize(GeneratorPostInitializationContext context)
+        {
+            context.AddSource("ExcludedTypeAttribute.cs", @"
+namespace UrlActionGenerator
+{
+    [System.AttributeUsage(System.AttributeTargets.Assembly)]
+    public sealed class ExcludedTypeAttribute : System.Attribute
+    {
+        public ExcludedTypeAttribute(Type type)
+        {
+            Type = type;
+        }
+
+        public Type Type { get; }
+    }
+}");
         }
 
         public void Execute(GeneratorExecutionContext context)
