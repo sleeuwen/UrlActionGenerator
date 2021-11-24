@@ -19,23 +19,71 @@ namespace UrlActionGenerator
 
             var controllerTypes = DiscoverControllers(allClasses);
 
-            var controllersByArea = controllerTypes.GroupBy(GetAreaName);
+            var allAreas = controllerTypes.Select(DiscoverAreaControllerActions);
 
-            foreach (var areaControllers in controllersByArea)
+            var combined = CombineAreas(allAreas);
+
+            return combined;
+
+            // var controllersByArea = controllerTypes.GroupBy(GetAreaName);
+            //
+            // foreach (var areaControllers in controllersByArea)
+            // {
+            //     var area = new AreaDescriptor(areaControllers.Key);
+            //
+            //     foreach (var controllerSymbol in areaControllers)
+            //     {
+            //         var controller = DiscoverControllerActions(controllerSymbol, area, disposableDispose);
+            //
+            //         if (controller.Actions.Any())
+            //             area.Controllers.Add(controller);
+            //     }
+            //
+            //     if (area.Controllers.Any())
+            //         yield return area;
+            // }
+        }
+
+        public static AreaDescriptor DiscoverAreaControllerActions(INamedTypeSymbol typeSymbol)
+        {
+            var area = new AreaDescriptor(GetAreaName(typeSymbol));
+
+            var controller = DiscoverControllerActions(typeSymbol, area, null);
+            if (controller.Actions.Count > 0)
+                area.Controllers.Add(controller);
+
+            return area;
+        }
+
+        public static IEnumerable<AreaDescriptor> CombineAreas(IEnumerable<AreaDescriptor> areas)
+        {
+            var areasByName = new Dictionary<string, AreaDescriptor>();
+            var controllersByName = new Dictionary<(string, string), ControllerDescriptor>();
+
+            foreach (var area in areas)
             {
-                var area = new AreaDescriptor(areaControllers.Key);
-
-                foreach (var controllerSymbol in areaControllers)
+                if (!areasByName.TryGetValue(area.Name, out var currentArea))
                 {
-                    var controller = DiscoverControllerActions(controllerSymbol, area, disposableDispose);
-
-                    if (controller.Actions.Any())
-                        area.Controllers.Add(controller);
+                    currentArea = new AreaDescriptor(area.Name);
+                    areasByName[area.Name] = currentArea;
                 }
 
-                if (area.Controllers.Any())
-                    yield return area;
+                foreach (var controller in area.Controllers)
+                {
+                    if (!controllersByName.TryGetValue((area.Name, controller.Name), out var currentController))
+                    {
+                        currentController = new ControllerDescriptor(area, controller.Name);
+                        controllersByName[(area.Name, controller.Name)] = currentController;
+                    }
+
+                    foreach (var action in controller.Actions)
+                    {
+                        currentController.Actions.Add(action);
+                    }
+                }
             }
+
+            return areasByName.Values.ToList();
         }
 
         public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)

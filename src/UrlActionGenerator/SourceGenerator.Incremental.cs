@@ -19,22 +19,66 @@ namespace UrlActionGenerator
     {
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var possibleControllers = context.SyntaxProvider
+            var controllers = context.SyntaxProvider
                 .CreateSyntaxProvider(
                     static (node, _) => node is TypeDeclarationSyntax classSyntax && MvcFacts.CanBeController(classSyntax),
-                    static (ctx, _) => (TypeDeclarationSyntax)ctx.Node)
+                    static (ctx, _) => GetSemanticModelForGeneration(ctx))
                 .Where(static m => m is not null);
 
-            var possibleRazorPages = context.AdditionalTextsProvider
+            var controllerActions = controllers
+                .Select((symbol, _) => MvcDiscoverer.DiscoverAreaControllerActions(symbol))
+                .Where(static area => area.Controllers.Count > 0);
+
+            var allAreas = controllerActions.Collect()
+                .Select((areas, _) => MvcDiscoverer.CombineAreas(areas));
+
+            context.RegisterSourceOutput(allAreas, static (context, areas) =>
+            {
+                using var sourceWriter = new StringWriter();
+                using var writer = new IndentedTextWriter(sourceWriter, "    ");
+
+                CodeGenerator.WriteUrlActions(writer, areas.ToList());
+
+                context.AddSource("UrlActionGenerator_UrlHelperExtensions.Mvc.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
+            });
+
+            var razorPages = context.AdditionalTextsProvider
                 .Where(static txt =>
-                    txt.Path.EndsWith(".cshtml") && txt.GetText().Lines.First().ToString().Contains("@page"));
+                    txt.Path.EndsWith(".cshtml") && txt.GetText().Lines.First().ToString().Contains("@page"))
+                .Select(static (txt, _) => new RazorPageItem(txt));
 
-            var compilationAndControllers = context.CompilationProvider.Combine(possibleControllers.Collect());
-            var optionsAndPages = context.AnalyzerConfigOptionsProvider.Combine(possibleRazorPages.Collect());
-            var compilationOptionsAndPages = context.CompilationProvider.Combine(optionsAndPages);
+            var implicitlyImportedPages = razorPages
+                .Where(PagesFacts.IsImplicitlyIncludedFile)
+                .Collect()
+                .Select(static (pages, _) => PagesDiscoverer.GatherImplicitUsings(pages));
 
-            context.RegisterSourceOutput(compilationAndControllers, static (spc, source) => Execute(source.Left, source.Right, spc));
-            context.RegisterSourceOutput(compilationOptionsAndPages, static (spc, source) => Execute(source.Left, source.Right.Left, source.Right.Right, spc));
+            var allPages = razorPages.Combine(implicitlyImportedPages).Combine(context.CompilationProvider)
+                .Select(static (tup, _) => (Page: tup.Left.Left, ImplicitlyImportedUsings: tup.Left.Right, Compilation: tup.Right))
+                .Select(static (tup, _) => PagesDiscoverer.DiscoverAreaPages(tup.Page, tup.ImplicitlyImportedUsings, tup.Compilation))
+                .Where(static area => area.Pages.Count > 0 || area.Folders.Count > 0);
+
+            var allPageAreas = allPages.Collect()
+                .Select((pages, _) => PagesDiscoverer.CombineAreas(pages));
+
+            context.RegisterSourceOutput(allPageAreas, static (context, areas) =>
+            {
+                using var sourceWriter = new StringWriter();
+                using var writer = new IndentedTextWriter(sourceWriter, "    ");
+
+                CodeGenerator.WriteUrlPages(writer, areas.ToList());
+
+                context.AddSource("UrlActionGenerator_UrlHelperExtensions.Pages.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
+            });
+        }
+
+        private static INamedTypeSymbol? GetSemanticModelForGeneration(GeneratorSyntaxContext context)
+        {
+            var symbol = context.SemanticModel.GetDeclaredSymbol(context.Node);
+
+            if (symbol is INamedTypeSymbol typeSymbol && MvcFacts.IsController(typeSymbol))
+                return typeSymbol;
+
+            return null;
         }
 
         public static void Execute(Compilation compilation, ImmutableArray<TypeDeclarationSyntax> controllers, SourceProductionContext context)

@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace UrlActionGenerator
 {
-    [Generator]
+    //[Generator]
     public class SourceGenerator : ISourceGenerator
     {
         public void Initialize(GeneratorInitializationContext context)

@@ -23,40 +23,90 @@ namespace UrlActionGenerator
 
             var usingsByDirectory = GatherImplicitUsings(pages);
 
-            foreach (var group in pages.GroupBy(page => page.Area))
+            var allAreas = pages.Select(page => DiscoverAreaPages(page, usingsByDirectory, compilation));
+
+            var grouped = CombineAreas(allAreas);
+
+            return grouped;
+        }
+
+        public static IEnumerable<PageAreaDescriptor> CombineAreas(IEnumerable<PageAreaDescriptor> areas)
+        {
+            var areasByName = new Dictionary<string, PageAreaDescriptor>();
+            var foldersByAreaAndName = new Dictionary<string, Dictionary<string, IPagesFoldersDescriptor>>();
+
+            foreach (var area in areas)
             {
-                var area = new PageAreaDescriptor(group.Key);
-
-                foreach (var page in group)
+                if (!areasByName.TryGetValue(area.Name, out var currentArea))
                 {
-                    var model = GetPageModel(page, compilation, usingsByDirectory);
-
-                    var modelParameters = RouteDiscoverer.DiscoverModelParameters(model, compilation).ToList();
-                    var modelParameterNames = modelParameters.Select(param => param.Name).ToList();
-
-                    var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route).ToList();
-                    routeParameters = routeParameters.ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
-
-                    foreach (var (pageHandler, method) in DiscoverMethods(model))
-                    {
-                        var methodParameters = RouteDiscoverer.DiscoverMethodParameters(method).ToList();
-                        var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
-
-                        var folder = area.GetFolder(page.Folder);
-                        folder.Pages.Add(new PageDescriptor(
-                            area,
-                            page.Page,
-                            pageHandler,
-                            routeParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase)
-                                .Concat(methodParameters)
-                                .Concat(modelParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase))
-                                .ToList()));
-                    }
+                    currentArea = new PageAreaDescriptor(area.Name);
+                    areasByName[area.Name] = currentArea;
                 }
 
-                SourceGenerator.Log(compilation, "Found: '" + area.Name + "', " + area.Pages.Count + " pages and " + area.Folders.Count + " folders");
-                yield return area;
+                if (!foldersByAreaAndName.TryGetValue(area.Name, out var foldersByName))
+                {
+                    foldersByName = new Dictionary<string, IPagesFoldersDescriptor>();
+                    foldersByAreaAndName[area.Name] = foldersByName;
+                }
+
+                AddPages(area, areasByName[area.Name], foldersByName);
             }
+
+            return areasByName.Values.ToList();
+
+            static void AddPages(IPagesFoldersDescriptor current, IPagesFoldersDescriptor parent, IDictionary<string, IPagesFoldersDescriptor> foldersByName)
+            {
+                foreach (var page in current.Pages)
+                    parent.Pages.Add(page);
+
+                foreach (var folder in current.Folders)
+                {
+                    if (!foldersByName.TryGetValue(folder.Path, out var parentFolder))
+                    {
+                        var area = parent switch
+                        {
+                            PageAreaDescriptor areaDescriptor => areaDescriptor,
+                            PageFolderDescriptor folderDescriptor => folderDescriptor.Area,
+                        };
+
+                        parentFolder = new PageFolderDescriptor(area, folder.Name, folder.Path);
+                        foldersByName[folder.Path] = parentFolder;
+                    }
+
+                    AddPages(parentFolder, folder, foldersByName);
+                }
+            }
+        }
+
+        internal static PageAreaDescriptor DiscoverAreaPages(RazorPageItem page, Dictionary<string, List<string>> usingsByDirectory, Compilation compilation)
+        {
+            var area = new PageAreaDescriptor(page.Area);
+
+            var model = GetPageModel(page, compilation, usingsByDirectory);
+
+            var modelParameters = RouteDiscoverer.DiscoverModelParameters(model, compilation).ToList();
+            var modelParameterNames = modelParameters.Select(param => param.Name).ToList();
+
+            var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route).ToList();
+            routeParameters = routeParameters.ExceptBy(modelParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+            foreach (var (pageHandler, method) in DiscoverMethods(model))
+            {
+                var methodParameters = RouteDiscoverer.DiscoverMethodParameters(method).ToList();
+                var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
+
+                var folder = area.GetFolder(page.Folder);
+                folder.Pages.Add(new PageDescriptor(
+                    area,
+                    page.Page,
+                    pageHandler,
+                    routeParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase)
+                        .Concat(methodParameters)
+                        .Concat(modelParameters.ExceptBy(methodParameterNames, param => param.Name, StringComparer.OrdinalIgnoreCase))
+                        .ToList()));
+            }
+
+            return area;
         }
 
         private static List<RazorPageItem> DiscoverRazorPages(IEnumerable<AdditionalText> additionalFiles, Compilation compilation, AnalyzerConfigOptions configOptions)
@@ -82,7 +132,7 @@ namespace UrlActionGenerator
             return pages;
         }
 
-        private static Dictionary<string, List<string>> GatherImplicitUsings(List<RazorPageItem> pages)
+        internal static Dictionary<string, List<string>> GatherImplicitUsings(IList<RazorPageItem> pages)
         {
             return pages
                 .Where(PagesFacts.IsImplicitlyIncludedFile)
