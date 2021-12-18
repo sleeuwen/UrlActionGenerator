@@ -37,19 +37,19 @@ namespace UrlActionGenerator
 
             foreach (var area in areas)
             {
-                if (!areasByName.TryGetValue(area.Name, out var currentArea))
+                if (!areasByName.TryGetValue(area.Name ?? "", out var currentArea))
                 {
                     currentArea = new PageAreaDescriptor(area.Name);
-                    areasByName[area.Name] = currentArea;
+                    areasByName[area.Name ?? ""] = currentArea;
                 }
 
-                if (!foldersByAreaAndName.TryGetValue(area.Name, out var foldersByName))
+                if (!foldersByAreaAndName.TryGetValue(area.Name ?? "", out var foldersByName))
                 {
                     foldersByName = new Dictionary<string, IPagesFoldersDescriptor>();
-                    foldersByAreaAndName[area.Name] = foldersByName;
+                    foldersByAreaAndName[area.Name ?? ""] = foldersByName;
                 }
 
-                AddPages(area, areasByName[area.Name], foldersByName);
+                AddPages(area, currentArea, foldersByName);
             }
 
             return areasByName.Values.ToList();
@@ -70,10 +70,11 @@ namespace UrlActionGenerator
                         };
 
                         parentFolder = new PageFolderDescriptor(area, folder.Name, folder.Path);
+                        parent.Folders.Add((PageFolderDescriptor)parentFolder);
                         foldersByName[folder.Path] = parentFolder;
                     }
 
-                    AddPages(parentFolder, folder, foldersByName);
+                    AddPages(folder, parentFolder, foldersByName);
                 }
             }
         }

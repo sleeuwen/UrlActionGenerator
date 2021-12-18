@@ -24,24 +24,6 @@ namespace UrlActionGenerator
             var combined = CombineAreas(allAreas);
 
             return combined;
-
-            // var controllersByArea = controllerTypes.GroupBy(GetAreaName);
-            //
-            // foreach (var areaControllers in controllersByArea)
-            // {
-            //     var area = new AreaDescriptor(areaControllers.Key);
-            //
-            //     foreach (var controllerSymbol in areaControllers)
-            //     {
-            //         var controller = DiscoverControllerActions(controllerSymbol, area, disposableDispose);
-            //
-            //         if (controller.Actions.Any())
-            //             area.Controllers.Add(controller);
-            //     }
-            //
-            //     if (area.Controllers.Any())
-            //         yield return area;
-            // }
         }
 
         public static AreaDescriptor DiscoverAreaControllerActions(INamedTypeSymbol typeSymbol)
@@ -70,9 +52,13 @@ namespace UrlActionGenerator
 
                 foreach (var controller in area.Controllers)
                 {
+                    if (controller.Actions.Count == 0)
+                        continue;
+
                     if (!controllersByName.TryGetValue((area.Name, controller.Name), out var currentController))
                     {
                         currentController = new ControllerDescriptor(area, controller.Name);
+                        currentArea.Controllers.Add(currentController);
                         controllersByName[(area.Name, controller.Name)] = currentController;
                     }
 
@@ -83,7 +69,9 @@ namespace UrlActionGenerator
                 }
             }
 
-            return areasByName.Values.ToList();
+            return areasByName.Values
+                .Where(area => area.Controllers.Count > 0)
+                .ToList();
         }
 
         public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
