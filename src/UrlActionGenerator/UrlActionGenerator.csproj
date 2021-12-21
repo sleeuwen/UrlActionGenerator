@@ -7,7 +7,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild> <!-- Generates a package at build -->
     <IncludeBuildOutput>false</IncludeBuildOutput> <!-- Do not include the generator as a lib dependency -->
 
-    <Version>0.5.0-dev.1</Version>
+    <Version>0.5.0</Version>
     <PackageId>UrlActionGenerator</PackageId>
     <RepositoryUrl>https://github.com/sleeuwen/UrlActionGenerator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
