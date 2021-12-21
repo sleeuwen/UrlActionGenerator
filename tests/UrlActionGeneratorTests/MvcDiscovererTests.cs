@@ -14,98 +14,6 @@ namespace UrlActionGeneratorTests
     public class MvcDiscovererTests
     {
         [Fact]
-        public void DiscoverAreaControllerActions_NoControllerNoArea()
-        {
-            var compilation = CreateCompilation(@"
-using Microsoft.AspNetCore.Mvc;
-
-namespace TestCode
-{
-    public class Home
-    {
-        public IActionResult Index()
-        {
-            return View();
-        }
-    }
-}");
-
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
-
-            Assert.Empty(areas);
-        }
-
-        [Fact]
-        public void DiscoverAreaControllerActions_PrivateControllerNoArea()
-        {
-            var compilation = CreateCompilation(@"
-using Microsoft.AspNetCore.Mvc;
-
-namespace TestCode
-{
-    private class HomeController
-    {
-        public IActionResult Index()
-        {
-            return View();
-        }
-    }
-}");
-
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
-
-            Assert.Empty(areas);
-        }
-
-        [Fact]
-        public void DiscoverAreaControllerActions_GenericControllerNoArea()
-        {
-            var compilation = CreateCompilation(@"
-using Microsoft.AspNetCore.Mvc;
-
-namespace TestCode
-{
-    public class HomeController<T>
-    {
-        public IActionResult Index()
-        {
-            return View();
-        }
-    }
-}");
-
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
-
-            Assert.Empty(areas);
-        }
-
-        [Fact]
-        public void DiscoverAreaControllerActions_AbstractControllerNoArea()
-        {
-            var compilation = CreateCompilation(@"
-using Microsoft.AspNetCore.Mvc;
-
-namespace TestCode
-{
-    public abstract class HomeController
-    {
-        public IActionResult Index()
-        {
-            return View();
-        }
-    }
-}");
-
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
-
-            Assert.Empty(areas);
-        }
-
-        [Fact]
         public void DiscoverAreaControllerActions_ImplicitControllerNoArea()
         {
             var compilation = CreateCompilation(@"
@@ -122,16 +30,17 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Empty(area.Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -151,16 +60,17 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Empty(area.Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -188,22 +98,24 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntaxes = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().ToList();
+            var classSymbols = classSyntaxes.Select(classSyntax => compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax)).ToList();
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Equal(2, areas[0].Controllers.Count);
+            var areas = classSymbols.Select(MvcDiscoverer.DiscoverAreaControllerActions);
+            var area = MvcDiscoverer.CombineAreas(areas).Single();
 
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
+            Assert.Equal("", area.Name);
+            Assert.Equal(2, area.Controllers.Count);
 
-            Assert.Equal("Contact", areas[0].Controllers[1].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Empty(area.Controllers[0].Actions.Single().Parameters);
+
+            Assert.Equal("Contact", area.Controllers[1].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Empty(area.Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -224,16 +136,17 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Empty(area.Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -255,16 +168,17 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("Admin", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+
+            Assert.Equal("Admin", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Empty(area.Controllers[0].Actions.Single().Parameters);
         }
 
         [Fact]
@@ -285,26 +199,27 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
 
-            Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("string", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Equal(2, area.Controllers[0].Actions.Single().Parameters.Count);
 
-            Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
-            Assert.Equal("int", areas[0].Controllers[0].Actions.Single().Parameters[1].Type);
-            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[1].DefaultValue);
+            Assert.Equal("search", area.Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("string", area.Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(area.Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(area.Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+
+            Assert.Equal("page", area.Controllers[0].Actions.Single().Parameters[1].Name);
+            Assert.Equal("int", area.Controllers[0].Actions.Single().Parameters[1].Type);
+            Assert.False(area.Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
+            Assert.Null(area.Controllers[0].Actions.Single().Parameters[1].DefaultValue);
         }
 
         [Fact]
@@ -325,26 +240,27 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Equal(2, areas[0].Controllers[0].Actions.Single().Parameters.Count);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
 
-            Assert.Equal("search", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("string", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
-            Assert.True(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
-            Assert.Equal("", areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Equal(2, area.Controllers[0].Actions.Single().Parameters.Count);
 
-            Assert.Equal("page", areas[0].Controllers[0].Actions.Single().Parameters[1].Name);
-            Assert.Equal("int", areas[0].Controllers[0].Actions.Single().Parameters[1].Type);
-            Assert.True(areas[0].Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
-            Assert.Equal(1, areas[0].Controllers[0].Actions.Single().Parameters[1].DefaultValue);
+            Assert.Equal("search", area.Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("string", area.Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.True(area.Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Equal("", area.Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+
+            Assert.Equal("page", area.Controllers[0].Actions.Single().Parameters[1].Name);
+            Assert.Equal("int", area.Controllers[0].Actions.Single().Parameters[1].Type);
+            Assert.True(area.Controllers[0].Actions.Single().Parameters[1].HasDefaultValue);
+            Assert.Equal(1, area.Controllers[0].Actions.Single().Parameters[1].DefaultValue);
         }
 
         [Fact]
@@ -366,21 +282,22 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
 
-            Assert.Equal("parameter", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Single(area.Controllers[0].Actions.Single().Parameters);
+
+            Assert.Equal("parameter", area.Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>", area.Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(area.Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(area.Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
 
         [Fact]
@@ -402,21 +319,22 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
 
-            Assert.Equal("strings", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("string[]", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Single(area.Controllers[0].Actions.Single().Parameters);
+
+            Assert.Equal("strings", area.Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("string[]", area.Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(area.Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(area.Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
 
         [Fact]
@@ -442,21 +360,22 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().First();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Single(areas[0].Controllers[0].Actions);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.Single().Name);
-            Assert.Single(areas[0].Controllers[0].Actions.Single().Parameters);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
 
-            Assert.Equal("param", areas[0].Controllers[0].Actions.Single().Parameters[0].Name);
-            Assert.Equal("TestCode.HomeController.NestedClass", areas[0].Controllers[0].Actions.Single().Parameters[0].Type);
-            Assert.False(areas[0].Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
-            Assert.Null(areas[0].Controllers[0].Actions.Single().Parameters[0].DefaultValue);
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Single(area.Controllers[0].Actions);
+            Assert.Equal("Index", area.Controllers[0].Actions.Single().Name);
+            Assert.Single(area.Controllers[0].Actions.Single().Parameters);
+
+            Assert.Equal("param", area.Controllers[0].Actions.Single().Parameters[0].Name);
+            Assert.Equal("TestCode.HomeController.NestedClass", area.Controllers[0].Actions.Single().Parameters[0].Type);
+            Assert.False(area.Controllers[0].Actions.Single().Parameters[0].HasDefaultValue);
+            Assert.Null(area.Controllers[0].Actions.Single().Parameters[0].DefaultValue);
         }
 
         [Fact]
@@ -485,18 +404,20 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntaxes = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().ToList();
+            var classSymbols = classSyntaxes.Select(classSyntax => compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax)).ToList();
 
-            Assert.Single(areas);
-            Assert.Equal("", areas[0].Name);
-            Assert.Single(areas[0].Controllers);
-            Assert.Equal("Home", areas[0].Controllers[0].Name);
-            Assert.Equal(2, areas[0].Controllers[0].Actions.Count);
-            Assert.Equal("Index", areas[0].Controllers[0].Actions.First().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.First().Parameters);
-            Assert.Equal("About", areas[0].Controllers[0].Actions.Skip(1).First().Name);
-            Assert.Empty(areas[0].Controllers[0].Actions.Skip(1).First().Parameters);
+            var areas = classSymbols.Select(MvcDiscoverer.DiscoverAreaControllerActions);
+            var area = MvcDiscoverer.CombineAreas(areas).Single();
+
+            Assert.Equal("", area.Name);
+            Assert.Single(area.Controllers);
+            Assert.Equal("Home", area.Controllers[0].Name);
+            Assert.Equal(2, area.Controllers[0].Actions.Count);
+            Assert.Equal("Index", area.Controllers[0].Actions.First().Name);
+            Assert.Empty(area.Controllers[0].Actions.First().Parameters);
+            Assert.Equal("About", area.Controllers[0].Actions.Skip(1).First().Name);
+            Assert.Empty(area.Controllers[0].Actions.Skip(1).First().Parameters);
         }
 
         [Fact]
@@ -519,10 +440,13 @@ namespace TestCode
     }
 }");
 
-            var allTypes = compilation.SyntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes()).OfType<TypeDeclarationSyntax>().ToList();
-            var areas = MvcDiscoverer.DiscoverAreaControllerActions(compilation, allTypes).ToList();
+            var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
+            var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            Assert.Empty(areas);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+
+            Assert.Empty(area.Name);
+            Assert.Empty(area.Controllers);
         }
 
         private static Compilation CreateCompilation(string source)

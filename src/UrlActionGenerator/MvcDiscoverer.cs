@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator.Descriptors;
 using UrlActionGenerator.Extensions;
 
@@ -10,22 +8,6 @@ namespace UrlActionGenerator
 {
     internal static class MvcDiscoverer
     {
-        public static IEnumerable<AreaDescriptor> DiscoverAreaControllerActions(Compilation compilation, List<TypeDeclarationSyntax> possibleControllers)
-        {
-            var allClasses = possibleControllers
-                .Select(st => compilation.GetSemanticModel(st.SyntaxTree).GetDeclaredSymbol(st));
-
-            var disposableDispose = (IMethodSymbol)compilation.GetSpecialType(SpecialType.System_IDisposable).GetMembers(nameof(IDisposable.Dispose)).First();
-
-            var controllerTypes = DiscoverControllers(allClasses);
-
-            var allAreas = controllerTypes.Select(DiscoverAreaControllerActions);
-
-            var combined = CombineAreas(allAreas);
-
-            return combined;
-        }
-
         public static AreaDescriptor DiscoverAreaControllerActions(INamedTypeSymbol typeSymbol)
         {
             var area = new AreaDescriptor(GetAreaName(typeSymbol));
@@ -93,16 +75,6 @@ namespace UrlActionGenerator
             }
 
             return controller;
-        }
-
-        public static List<INamedTypeSymbol> DiscoverControllers(IEnumerable<ISymbol> symbols)
-        {
-            return symbols
-                .OfType<INamedTypeSymbol>()
-                .Where(MvcFacts.IsController)
-                .Distinct(SymbolEqualityComparer.Default) // partial classes register as duplicate symbols
-                .Cast<INamedTypeSymbol>()
-                .ToList();
         }
 
         public static List<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, IMethodSymbol disposableDispose)
