@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -17,11 +16,16 @@ namespace UrlActionGenerator
             if (typeSyntax is not ClassDeclarationSyntax classSyntax)
                 return false;
 
-            var isAbstract = classSyntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.AbstractKeyword));
-            if (isAbstract)
-                return false;
+            var isPublic = false;
+            foreach (var modifier in classSyntax.Modifiers)
+            {
+                if (modifier.IsKind(SyntaxKind.AbstractKeyword))
+                    return false;
 
-            var isPublic = classSyntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PublicKeyword));
+                if (modifier.IsKind(SyntaxKind.PublicKeyword))
+                    isPublic = true;
+            }
+
             if (!isPublic)
                 return false;
 
@@ -64,14 +68,19 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            if (type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonControllerAttribute"))
+            var hasControllerAttribute = false;
+
+            foreach (var attribute in type.GetAttributes(inherit: true))
             {
-                return false;
+                var fullName = attribute.AttributeClass.GetFullNamespacedName();
+                if (fullName == "Microsoft.AspNetCore.Mvc.NonControllerAttribute")
+                    return false;
+
+                if (fullName == "Microsoft.AspNetCore.Mvc.ControllerAttribute")
+                    hasControllerAttribute = true;
             }
 
             var hasControllerSuffix = type.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase);
-            var hasControllerAttribute = type.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.ControllerAttribute");
-
             if (!hasControllerSuffix && !hasControllerAttribute)
             {
                 return false;
@@ -120,9 +129,10 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            if (method.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonActionAttribute"))
+            foreach (var attribute in method.GetAttributes(inherit: true))
             {
-                return false;
+                if (attribute.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.NonActionAttribute")
+                    return false;
             }
 
             return true;
@@ -130,6 +140,9 @@ namespace UrlActionGenerator
 
         private static bool IsIDisposableDispose(IMethodSymbol method, IMethodSymbol disposableDispose)
         {
+            if (disposableDispose is null)
+                return false;
+
             if (method.Name != disposableDispose.Name)
             {
                 return false;

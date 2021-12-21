@@ -6,6 +6,7 @@ using FluentAssertions;
 using UrlActionGenerator;
 using UrlActionGenerator.Descriptors;
 using Xunit;
+using CodeGenerator = UrlActionGenerator.CodeGenerator;
 
 namespace UrlActionGeneratorTests
 {

@@ -190,10 +190,10 @@ public class UrlPages
         public void WriteAreaPages_Folders()
         {
             var area = new PageAreaDescriptor("");
-            var folder = new PageFolderDescriptor(area, "Home");
+            var folder = new PageFolderDescriptor(area, "Home", "/Home");
             area.Folders.Add(folder);
             folder.Pages.Add(new PageDescriptor(area, "/Index"));
-            var folder2 = new PageFolderDescriptor(area, "Other");
+            var folder2 = new PageFolderDescriptor(area, "Other", "/Other");
             area.Folders.Add(folder2);
             folder2.Pages.Add(new PageDescriptor(area, "/Privacy"));
 

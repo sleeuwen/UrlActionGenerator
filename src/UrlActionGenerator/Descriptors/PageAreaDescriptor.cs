@@ -14,6 +14,8 @@ namespace UrlActionGenerator.Descriptors
 
         public string Name { get; }
 
+        public string Path { get; } = "/";
+
         public KeyedCollection<PageDescriptor> Pages { get; }
 
         public KeyedCollection<PageFolderDescriptor> Folders { get; }
@@ -28,7 +30,7 @@ namespace UrlActionGenerator.Descriptors
                 var folder = currentFolder.Folders.FirstOrDefault(f => f.Name == folderName);
                 if (folder == null)
                 {
-                    folder = new PageFolderDescriptor(this, folderName);
+                    folder = new PageFolderDescriptor(this, folderName, $"{currentFolder.Path}/{folderName}");
                     currentFolder.Folders.Add(folder);
                 }
 

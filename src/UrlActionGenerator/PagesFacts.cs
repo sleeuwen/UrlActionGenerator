@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using UrlActionGenerator.Extensions;
@@ -47,11 +46,6 @@ namespace UrlActionGenerator
                 return false;
             }
 
-            if (method.GetAttributes(inherit: true).Any(attr => attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.RazorPages.NonHandlerAttribute"))
-            {
-                return false;
-            }
-
             if (!method.Name.StartsWith("OnDelete", StringComparison.OrdinalIgnoreCase)
                 && !method.Name.StartsWith("OnGet", StringComparison.OrdinalIgnoreCase)
                 && !method.Name.StartsWith("OnHead", StringComparison.OrdinalIgnoreCase)
@@ -61,6 +55,14 @@ namespace UrlActionGenerator
                 && !method.Name.StartsWith("OnPut", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
+            }
+
+            foreach (var attribute in method.GetAttributes(inherit: true))
+            {
+                if (attribute.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.RazorPages.NonHandlerAttribute")
+                {
+                    return false;
+                }
             }
 
             return true;
