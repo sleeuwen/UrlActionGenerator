@@ -7,37 +7,40 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace UrlActionGenerator
 {
-    //[Generator]
-    public class SourceGenerator : ISourceGenerator
+    [Generator]
+    public class SourceGenerator : IIncrementalGenerator
     {
-        public void Initialize(GeneratorInitializationContext context)
+        public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            context.RegisterForSyntaxNotifications(() => new MySyntaxReceiver());
+            CreateMvcPipeline(context);
+            CreateRazorPagesPipeline(context);
         }
 
-        public void Execute(GeneratorExecutionContext context)
+        private static void CreateMvcPipeline(IncrementalGeneratorInitializationContext context)
         {
-            if (AssemblyFacts.IsRazorViewsAssembly(context.Compilation.Assembly))
-                return;
+            var controllers = context.SyntaxProvider
+                .CreateSyntaxProvider(
+                    static (node, _) => node is TypeDeclarationSyntax classSyntax && MvcFacts.CanBeController(classSyntax),
+                    static (ctx, _) => GetSemanticModelForGeneration(ctx))
+                .Where(static m => m is not null);
 
-            CodeGenMvc(context);
-            CodeGenRazorPages(context);
-        }
+            var controllerActions = controllers.Combine(context.CompilationProvider)
+                .Where(static tup => tup.Right.AssemblyName?.EndsWith(".Views") != true)
+                .Select((tup, _) => MvcDiscoverer.DiscoverAreaControllerActions(tup.Left))
+                .Where(static area => area.Controllers.Count > 0);
 
-        private static void CodeGenMvc(GeneratorExecutionContext context)
-        {
-            var syntaxReceiver = (MySyntaxReceiver)context.SyntaxReceiver;
+            var areaDescriptors = controllerActions.Collect()
+                .Select(static (areas, _) => MvcDiscoverer.CombineAreas(areas).ToList());
 
-            var sw = Stopwatch.StartNew();
-
-            Log(context.Compilation, "MVC");
-            try
+            context.RegisterSourceOutput(areaDescriptors, static (context, areas) =>
             {
-                var areas = MvcDiscoverer.DiscoverAreaControllerActions(context.Compilation, syntaxReceiver.PossibleControllers).ToList();
+                if (areas.Count == 0)
+                    return;
 
                 using var sourceWriter = new StringWriter();
                 using var writer = new IndentedTextWriter(sourceWriter, "    ");
@@ -45,41 +48,61 @@ namespace UrlActionGenerator
                 CodeGenerator.WriteUrlActions(writer, areas);
 
                 context.AddSource("UrlActionGenerator_UrlHelperExtensions.Mvc.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
-            }
-            catch (Exception ex)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MvcCodeGenException, Location.None, ex.Message, ex.StackTrace));
-                Log(context.Compilation, $"Exception during generating MVC: {ex.Message}\n{ex.StackTrace}");
-            }
-
-            sw.Stop();
-            Log(context.Compilation, $"MVC step took: {sw.Elapsed.TotalMilliseconds}ms");
+            });
         }
 
-        private static void CodeGenRazorPages(GeneratorExecutionContext context)
+        private static void CreateRazorPagesPipeline(IncrementalGeneratorInitializationContext context)
         {
-            var sw = Stopwatch.StartNew();
+            var razorPages = context.AdditionalTextsProvider
+                .Where(static txt =>
+                {
+                    if (!txt.Path.EndsWith(".cshtml"))
+                        return false;
 
-            Log(context.Compilation, "Razor Pages");
-            try
+                    var lines = txt.GetText()?.Lines;
+                    if (lines is null or { Count: 0 })
+                        return false;
+
+                    return lines[0].ToString().Contains("@page");
+                })
+                .Select(static (txt, _) => new RazorPageItem(txt));
+
+            var implicitlyImportedUsings = razorPages
+                .Where(PagesFacts.IsImplicitlyIncludedFile)
+                .Collect()
+                .Select(static (pages, _) => PagesDiscoverer.GatherImplicitUsings(pages));
+
+            var allPages = razorPages.Combine(implicitlyImportedUsings).Combine(context.CompilationProvider)
+                .Select(static (tup, _) => (Page: tup.Left.Left, ImplicitlyImportedUsings: tup.Left.Right, Compilation: tup.Right))
+                .Where(static tup => tup.Compilation.AssemblyName?.EndsWith(".Views") != true)
+                .Select(static (tup, _) => PagesDiscoverer.DiscoverAreaPages(tup.Page, tup.ImplicitlyImportedUsings, tup.Compilation))
+                .Where(static area => area.Pages.Count > 0 || area.Folders.Count > 0);
+
+            var allPageAreas = allPages.Collect()
+                .Select((pages, _) => PagesDiscoverer.CombineAreas(pages).ToList());
+
+            context.RegisterSourceOutput(allPageAreas, static (context, areas) =>
             {
-                var pages = PagesDiscoverer.DiscoverAreaPages(context.Compilation, context.AdditionalFiles, context.AnalyzerConfigOptions.GlobalOptions).ToList();
+                if (areas.Count == 0)
+                    return;
 
                 using var sourceWriter = new StringWriter();
                 using var writer = new IndentedTextWriter(sourceWriter, "    ");
 
-                CodeGenerator.WriteUrlPages(writer, pages);
+                CodeGenerator.WriteUrlPages(writer, areas.ToList());
 
                 context.AddSource("UrlActionGenerator_UrlHelperExtensions.Pages.g.cs", SourceText.From(sourceWriter.ToString(), Encoding.UTF8));
-            }
-            catch (Exception ex)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Diagnostics.RazorPagesCodeGenException, Location.None, ex.Message, ex.StackTrace));
-                Log(context.Compilation, $"Exception during generating Razor Pages: {ex.Message}\n{ex.StackTrace}");
-            }
+            });
+        }
 
-            sw.Stop();
-            Log(context.Compilation, $"Razor Pages step took: {sw.Elapsed.TotalMilliseconds}ms");
+        private static INamedTypeSymbol? GetSemanticModelForGeneration(GeneratorSyntaxContext context)
+        {
+            var symbol = context.SemanticModel.GetDeclaredSymbol(context.Node);
+
+            if (symbol is INamedTypeSymbol typeSymbol && MvcFacts.IsController(typeSymbol))
+                return typeSymbol;
+
+            return null;
         }
 
         [Conditional("DEBUG")]
