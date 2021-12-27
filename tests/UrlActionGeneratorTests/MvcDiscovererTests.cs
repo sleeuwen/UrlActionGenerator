@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -63,7 +64,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -101,7 +102,8 @@ namespace TestCode
             var classSyntaxes = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().ToList();
             var classSymbols = classSyntaxes.Select(classSyntax => compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax)).ToList();
 
-            var areas = classSymbols.Select(MvcDiscoverer.DiscoverAreaControllerActions);
+            var generatorContext = new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty);
+            var areas = classSymbols.Select(symbol => MvcDiscoverer.DiscoverAreaControllerActions(symbol, generatorContext));
             var area = MvcDiscoverer.CombineAreas(areas).Single();
 
             Assert.Equal("", area.Name);
@@ -139,7 +141,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -171,7 +173,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("Admin", area.Name);
             Assert.Single(area.Controllers);
@@ -202,7 +204,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -243,7 +245,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -285,7 +287,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -322,7 +324,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -363,7 +365,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().First();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Equal("", area.Name);
             Assert.Single(area.Controllers);
@@ -407,7 +409,8 @@ namespace TestCode
             var classSyntaxes = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().ToList();
             var classSymbols = classSyntaxes.Select(classSyntax => compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax)).ToList();
 
-            var areas = classSymbols.Select(MvcDiscoverer.DiscoverAreaControllerActions);
+            var generatorContext = new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty);
+            var areas = classSymbols.Select(symbol => MvcDiscoverer.DiscoverAreaControllerActions(symbol, generatorContext));
             var area = MvcDiscoverer.CombineAreas(areas).Single();
 
             Assert.Equal("", area.Name);
@@ -443,7 +446,7 @@ namespace TestCode
             var classSyntax = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<TypeDeclarationSyntax>().Single();
             var classSymbol = compilation.GetSemanticModel(classSyntax.SyntaxTree).GetDeclaredSymbol(classSyntax);
 
-            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol);
+            var area = MvcDiscoverer.DiscoverAreaControllerActions(classSymbol, new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty));
 
             Assert.Empty(area.Name);
             Assert.Empty(area.Controllers);

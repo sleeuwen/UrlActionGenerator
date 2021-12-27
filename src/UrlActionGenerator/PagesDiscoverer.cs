@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -12,24 +13,6 @@ namespace UrlActionGenerator
 {
     public static class PagesDiscoverer
     {
-        public static IEnumerable<PageAreaDescriptor> DiscoverAreaPages(Compilation compilation, IEnumerable<AdditionalText> additionalFiles, AnalyzerConfigOptions configOptions)
-        {
-            var pages = DiscoverRazorPages(additionalFiles, compilation, configOptions);
-
-            foreach (var page in pages)
-            {
-                SourceGenerator.Log(compilation, "area:" + page.Area + ", page:"  + page.Page + ", route:" + page.Route + ", model:" + page.Model);
-            }
-
-            var usingsByDirectory = GatherImplicitUsings(pages);
-
-            var allAreas = pages.Select(page => DiscoverAreaPages(page, usingsByDirectory, compilation));
-
-            var grouped = CombineAreas(allAreas);
-
-            return grouped;
-        }
-
         public static IEnumerable<PageAreaDescriptor> CombineAreas(IEnumerable<PageAreaDescriptor> areas)
         {
             var areasByName = new Dictionary<string, PageAreaDescriptor>();
@@ -79,13 +62,13 @@ namespace UrlActionGenerator
             }
         }
 
-        internal static PageAreaDescriptor DiscoverAreaPages(RazorPageItem page, Dictionary<string, List<string>> usingsByDirectory, Compilation compilation)
+        internal static PageAreaDescriptor DiscoverAreaPages(RazorPageItem page, GeneratorContext context)
         {
             var area = new PageAreaDescriptor(page.Area);
 
-            var model = GetPageModel(page, compilation, usingsByDirectory);
+            var model = GetPageModel(page, context);
 
-            var modelParameters = RouteDiscoverer.DiscoverModelParameters(model, compilation).ToList();
+            var modelParameters = RouteDiscoverer.DiscoverModelParameters(model, context).ToList();
             var modelParameterNames = modelParameters.Select(param => param.Name).ToList();
 
             var routeParameters = RouteDiscoverer.DiscoverRouteParameters(page.Route).ToList();
@@ -93,7 +76,7 @@ namespace UrlActionGenerator
 
             foreach (var (pageHandler, method) in DiscoverMethods(model))
             {
-                var methodParameters = RouteDiscoverer.DiscoverMethodParameters(method).ToList();
+                var methodParameters = RouteDiscoverer.DiscoverMethodParameters(method, context).ToList();
                 var methodParameterNames = methodParameters.Select(param => param.Name).ToList();
 
                 var folder = area.GetFolder(page.Folder);
@@ -133,38 +116,38 @@ namespace UrlActionGenerator
             return pages;
         }
 
-        internal static Dictionary<string, List<string>> GatherImplicitUsings(IList<RazorPageItem> pages)
+        internal static ImmutableDictionary<string, ImmutableArray<string>> GatherImplicitUsings(IList<RazorPageItem> pages)
         {
             return pages
                 .Where(PagesFacts.IsImplicitlyIncludedFile)
                 .GroupBy(page => page.Folder)
-                .ToDictionary(g => g.Key, g => g.SelectMany(PagesFacts.ExtractUsings).Distinct().ToList());
+                .ToImmutableDictionary(g => g.Key, g => g.SelectMany(PagesFacts.ExtractUsings).Distinct().ToImmutableArray());
         }
 
-        private static INamedTypeSymbol GetPageModel(RazorPageItem razorPage, Compilation compilation, Dictionary<string, List<string>> usingsByDirectory)
+        private static INamedTypeSymbol GetPageModel(RazorPageItem razorPage, GeneratorContext context)
         {
             if (razorPage.Model == null)
                 return null;
 
             // First try to get the page model based on the usings in this file
             var explicitUsings = PagesFacts.ExtractUsings(razorPage);
-            var pageModel = FindPageModel(compilation, razorPage.Model, explicitUsings);
+            var pageModel = FindPageModel(context.Compilation, razorPage.Model, explicitUsings);
             if (pageModel != null)
                 return pageModel;
 
             // Walk up the path and try to get the page model based on usings in the implicitly included files
             foreach (var path in EnumerateUpPath(razorPage.AdditionalText.Path))
             {
-                if (usingsByDirectory.TryGetValue(path, out var usings))
+                if (context.ImplicitlyImportedUsings.TryGetValue(path, out var usings))
                 {
-                    pageModel = FindPageModel(compilation, razorPage.Model, usings);
+                    pageModel = FindPageModel(context.Compilation, razorPage.Model, usings);
                     if (pageModel != null)
                         return pageModel;
                 }
             }
 
             // Last try to get the page model based on what is in @model without a using
-            return FindPageModel(compilation, razorPage.Model, new List<string> { "" });
+            return FindPageModel(context.Compilation, razorPage.Model, new List<string> { "" });
 
             static INamedTypeSymbol FindPageModel(Compilation compilation, string model, IEnumerable<string> usings)
             {

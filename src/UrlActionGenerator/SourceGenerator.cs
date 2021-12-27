@@ -1,5 +1,6 @@
 using System;
 using System.CodeDom.Compiler;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -17,11 +18,89 @@ namespace UrlActionGenerator
     {
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            CreateMvcPipeline(context);
-            CreateRazorPagesPipeline(context);
+            context.RegisterPostInitializationOutput(PostInitialize);
+
+            var generatorContext = CreateGeneratorContextProvider(context);
+
+            CreateMvcPipeline(context, generatorContext);
+            CreateRazorPagesPipeline(context, generatorContext);
         }
 
-        private static void CreateMvcPipeline(IncrementalGeneratorInitializationContext context)
+        private static void PostInitialize(IncrementalGeneratorPostInitializationContext context)
+        {
+            context.AddSource("ExcludedTypeAttribute.cs", @"namespace UrlActionGenerator
+{
+    [System.AttributeUsage(System.AttributeTargets.Assembly)]
+    public sealed class ExcludedTypeAttribute : System.Attribute
+    {
+        public ExcludedTypeAttribute(System.Type type)
+        {
+        }
+    }
+}");
+        }
+
+        private static IncrementalValueProvider<GeneratorContext> CreateGeneratorContextProvider(IncrementalGeneratorInitializationContext context)
+        {
+            var excludedTypes = CreateExcludedTypesValueProvider(context);
+
+            return context.CompilationProvider.Combine(excludedTypes)
+                .Select(static (tup, _) => new GeneratorContext(tup.Left, tup.Right));
+        }
+
+        private static IncrementalValueProvider<ImmutableArray<ITypeSymbol>> CreateExcludedTypesValueProvider(IncrementalGeneratorInitializationContext context)
+        {
+            var attributes = context.SyntaxProvider.CreateSyntaxProvider(
+                    static (node, _) => FilterExcludedTypeAttributes(node),
+                    static (context, _) => GetTypeSymbolForExcludedType(context))
+                .Where(x => x != null)
+                .Collect();
+
+            return attributes;
+
+            static bool FilterExcludedTypeAttributes(SyntaxNode node)
+            {
+                if (node is not AttributeSyntax attributeSyntax)
+                    return false;
+
+                if (attributeSyntax.ArgumentList?.Arguments.Count != 1)
+                    return false;
+
+                if ((attributeSyntax.Parent as AttributeListSyntax)?.Target?.Identifier.ToString() != "assembly")
+                    return false;
+
+                var attributeName = attributeSyntax.Name.ToString();
+                if (!attributeName.EndsWith("ExcludedTypeAttribute") && !attributeName.EndsWith("ExcludedType"))
+                    return false;
+
+                return true;
+            }
+
+            static ITypeSymbol GetTypeSymbolForExcludedType(GeneratorSyntaxContext context)
+            {
+                var excludedTypeAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName("UrlActionGenerator.ExcludedTypeAttribute");
+
+                var attribute = (AttributeSyntax)context.Node;
+                if (attribute.ArgumentList?.Arguments.Count != 1)
+                    return null;
+
+                var attributeName = attribute.Name.ToString();
+                if (!attributeName.EndsWith("ExcludedTypeAttribute") && !attributeName.EndsWith("ExcludedType"))
+                    return null;
+
+                var attributeType = context.SemanticModel.GetTypeInfo(attribute).Type;
+                if (attributeType == null || !attributeType.Equals(excludedTypeAttributeType))
+                    return null;
+
+                var typeSyntax = (attribute.ArgumentList.Arguments[0].Expression as TypeOfExpressionSyntax)?.Type;
+                if (typeSyntax == null)
+                    return null;
+
+                return context.SemanticModel.GetTypeInfo(typeSyntax).Type;
+            }
+        }
+
+        private static void CreateMvcPipeline(IncrementalGeneratorInitializationContext context, IncrementalValueProvider<GeneratorContext> generatorContextProvider)
         {
             var controllers = context.SyntaxProvider
                 .CreateSyntaxProvider(
@@ -29,9 +108,9 @@ namespace UrlActionGenerator
                     static (ctx, _) => GetSemanticModelForGeneration(ctx))
                 .Where(static m => m is not null);
 
-            var controllerActions = controllers.Combine(context.CompilationProvider)
-                .Where(static tup => tup.Right.AssemblyName?.EndsWith(".Views") != true)
-                .Select((tup, _) => MvcDiscoverer.DiscoverAreaControllerActions(tup.Left))
+            var controllerActions = controllers.Combine(generatorContextProvider)
+                .Where(static (tup) => !tup.Right.IsViewsAssembly)
+                .Select((tup, _) => MvcDiscoverer.DiscoverAreaControllerActions(tup.Left, tup.Right))
                 .Where(static area => area.Controllers.Count > 0);
 
             var areaDescriptors = controllerActions.Collect()
@@ -51,7 +130,7 @@ namespace UrlActionGenerator
             });
         }
 
-        private static void CreateRazorPagesPipeline(IncrementalGeneratorInitializationContext context)
+        private static void CreateRazorPagesPipeline(IncrementalGeneratorInitializationContext context, IncrementalValueProvider<GeneratorContext> generatorContextProvider)
         {
             var razorPages = context.AdditionalTextsProvider
                 .Where(static txt =>
@@ -72,10 +151,12 @@ namespace UrlActionGenerator
                 .Collect()
                 .Select(static (pages, _) => PagesDiscoverer.GatherImplicitUsings(pages));
 
-            var allPages = razorPages.Combine(implicitlyImportedUsings).Combine(context.CompilationProvider)
-                .Select(static (tup, _) => (Page: tup.Left.Left, ImplicitlyImportedUsings: tup.Left.Right, Compilation: tup.Right))
-                .Where(static tup => tup.Compilation.AssemblyName?.EndsWith(".Views") != true)
-                .Select(static (tup, _) => PagesDiscoverer.DiscoverAreaPages(tup.Page, tup.ImplicitlyImportedUsings, tup.Compilation))
+            var pagesGeneratorContextProvider = generatorContextProvider.Combine(implicitlyImportedUsings)
+                .Select(static (tup, _) => new GeneratorContext(tup.Left, tup.Right));
+
+            var allPages = razorPages.Combine(pagesGeneratorContextProvider)
+                .Where(static tup => !tup.Right.IsViewsAssembly)
+                .Select(static (tup, _) => PagesDiscoverer.DiscoverAreaPages(tup.Left, tup.Right))
                 .Where(static area => area.Pages.Count > 0 || area.Folders.Count > 0);
 
             var allPageAreas = allPages.Collect()

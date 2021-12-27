@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using UrlActionGenerator.Descriptors;
@@ -8,11 +9,11 @@ namespace UrlActionGenerator
 {
     internal static class MvcDiscoverer
     {
-        public static AreaDescriptor DiscoverAreaControllerActions(INamedTypeSymbol typeSymbol)
+        public static AreaDescriptor DiscoverAreaControllerActions(INamedTypeSymbol typeSymbol, GeneratorContext context)
         {
             var area = new AreaDescriptor(GetAreaName(typeSymbol));
 
-            var controller = DiscoverControllerActions(typeSymbol, area, null);
+            var controller = DiscoverControllerActions(typeSymbol, area, context);
             if (controller.Actions.Count > 0)
                 area.Controllers.Add(controller);
 
@@ -56,17 +57,17 @@ namespace UrlActionGenerator
                 .ToList();
         }
 
-        public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, IMethodSymbol disposableDispose)
+        public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, GeneratorContext context)
         {
             var controllerName = RouteDiscoverer.DiscoverControllerName(controllerSymbol);
             var controller = new ControllerDescriptor(area, controllerName);
 
-            foreach (var actionSymbol in DiscoverActions(controllerSymbol, disposableDispose))
+            foreach (var actionSymbol in DiscoverActions(controllerSymbol, context))
             {
                 var actionName = RouteDiscoverer.DiscoverActionName(actionSymbol);
                 var action = new ActionDescriptor(controller, actionName);
 
-                foreach (var parameter in RouteDiscoverer.DiscoverMethodParameters(actionSymbol))
+                foreach (var parameter in RouteDiscoverer.DiscoverMethodParameters(actionSymbol, context))
                 {
                     action.Parameters.Add(parameter);
                 }
@@ -77,10 +78,10 @@ namespace UrlActionGenerator
             return controller;
         }
 
-        public static List<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, IMethodSymbol disposableDispose)
+        public static List<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, GeneratorContext context)
         {
             return controllerSymbol.GetMembers().OfType<IMethodSymbol>()
-                .Where(method => MvcFacts.IsControllerAction(method, disposableDispose))
+                .Where(method => MvcFacts.IsControllerAction(method, context.DisposableDispose))
                 .ToList();
         }
 

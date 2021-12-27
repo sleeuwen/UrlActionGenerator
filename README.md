@@ -3,6 +3,10 @@
 [![NuGet Version](http://img.shields.io/nuget/v/UrlActionGenerator.svg?style=flat)](https://www.nuget.org/packages/UrlActionGenerator/) 
 [![Coverage Status](https://coveralls.io/repos/github/sleeuwen/UrlActionGenerator/badge.svg?branch=master)](https://coveralls.io/github/sleeuwen/UrlActionGenerator?branch=master)
 
+**Note:** Since version 0.5.0, only VS2022 and the .NET 6 SDK are supported.
+you should still be able to build .NET 5/.NET Core 3.1 projects as long as
+you're using the .NET 6 SDK/VS2022 to build those projects.
+
 UrlActionGenerator is a C# Source Generator for ASP.NET Core apps that create
 strongly typed extension methods for the generation of URL's in ASP.NET Core
 projects.
@@ -12,7 +16,7 @@ So instead of writing this by using magical strings:
 <a asp-controller="Home" asp-action="Index" asp-route-param="4">Link</a>
 ```
 
-You can write the following with the advantages of autocomplete and strong types:
+You can write the following with the advantages of autocomplete and strong typing:
 ```razor
 <a href="@Url.Actions().Home.Index(param: 4)">Link</a>
 ```
@@ -40,8 +44,8 @@ IUrlHelper.[AreaName]Actions().[ControllerName].[ActionName](...parameters)
 
 For Razor Pages:
 ```C#
-IUrlHelper.Pages().Folder.Page(...parameters)
-IUrlHelper.[AreaName]Pages().Folder.Page(...parameters)
+IUrlHelper.Pages().[Folder].[Page](...parameters)
+IUrlHelper.[AreaName]Pages().[Folder].[Page](...parameters)
 ```
 
 For more examples check out the [wiki](https://github.com/sleeuwen/UrlActionGenerator/wiki)
