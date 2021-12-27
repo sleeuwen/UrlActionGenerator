@@ -199,15 +199,17 @@ namespace AspNetCoreSamplePages.Pages.Feature
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using UrlActionGenerator;
 
 [assembly: UrlActionGenerator.ExcludedTypeAttribute(typeof(TestCode.Model))]
 [assembly: UrlActionGenerator.ExcludedType(typeof(TestCode.AnotherModel))]
+[assembly: ExcludedType(typeof(TestCode.ThirdModel))]
 
 namespace TestCode
 {
     public class HomeController : Controller
     {
-        public IActionResult Index(Model model, AnotherModel anotherModel, int param, System.Threading.CancellationToken cancellationToken, IFormFile file, IFormFile[] files, System.Collections.Generic.List<IFormFile> files)
+        public IActionResult Index(Model model, AnotherModel anotherModel, int param, ThirdModel thirdModel, System.Threading.CancellationToken cancellationToken, IFormFile file, IFormFile[] files, System.Collections.Generic.List<IFormFile> files)
         {
             return View();
         }
@@ -215,6 +217,7 @@ namespace TestCode
 
     public class Model {}
     public class AnotherModel {}
+    public class ThirdModel {}
 }", Encoding.UTF8)),
                 },
                 null);

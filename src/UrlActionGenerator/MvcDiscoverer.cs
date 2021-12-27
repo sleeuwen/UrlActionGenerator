@@ -57,7 +57,7 @@ namespace UrlActionGenerator
                 .ToList();
         }
 
-        public static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, GeneratorContext context)
+        private static ControllerDescriptor DiscoverControllerActions(INamedTypeSymbol controllerSymbol, AreaDescriptor area, GeneratorContext context)
         {
             var controllerName = RouteDiscoverer.DiscoverControllerName(controllerSymbol);
             var controller = new ControllerDescriptor(area, controllerName);
@@ -78,14 +78,14 @@ namespace UrlActionGenerator
             return controller;
         }
 
-        public static List<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, GeneratorContext context)
+        private static List<IMethodSymbol> DiscoverActions(ITypeSymbol controllerSymbol, GeneratorContext context)
         {
             return controllerSymbol.GetMembers().OfType<IMethodSymbol>()
                 .Where(method => MvcFacts.IsControllerAction(method, context.DisposableDispose))
                 .ToList();
         }
 
-        public static string GetAreaName(ITypeSymbol symbol)
+        private static string GetAreaName(ITypeSymbol symbol)
         {
             return symbol.GetAttributes(inherit: true)
                 .Where(IsAreaAttribute)

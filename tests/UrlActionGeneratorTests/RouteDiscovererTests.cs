@@ -1,6 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator;
 using UrlActionGenerator.Descriptors;
 using Xunit;
@@ -41,5 +49,79 @@ namespace UrlActionGeneratorTests
             // Assert
             parameters.Should().BeEquivalentTo(expectedParameters);
         }
+
+        [Fact]
+        public void DiscoverActionName_FromActionNameAttribute()
+        {
+            var compilation = CreateCompilation(@"
+using Microsoft.AspNetCore.Mvc;
+
+public class TestClass
+{
+    [ActionName(""CustomActionName"")]
+    public void ActionMethod() {}
+}");
+
+            var method = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
+            var methodSymbol = compilation.GetSemanticModel(method.SyntaxTree).GetDeclaredSymbol(method);
+
+            var result = RouteDiscoverer.DiscoverActionName(methodSymbol);
+
+            Assert.Equal("CustomActionName", result);
+        }
+
+        [Fact]
+        public void DiscoverActionName_FromMethodName()
+        {
+            var compilation = CreateCompilation(@"
+public class TestClass
+{
+    public void ActionMethod() {}
+}");
+
+            var method = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
+            var methodSymbol = compilation.GetSemanticModel(method.SyntaxTree).GetDeclaredSymbol(method);
+
+            var result = RouteDiscoverer.DiscoverActionName(methodSymbol);
+
+            Assert.Equal("ActionMethod", result);
+        }
+
+        [Fact]
+        public void DiscoverActionName_FromMethodNameAsync()
+        {
+            var compilation = CreateCompilation(@"
+public class TestClass
+{
+    public void ActionMethodAsync() {}
+}");
+
+            var method = compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
+            var methodSymbol = compilation.GetSemanticModel(method.SyntaxTree).GetDeclaredSymbol(method);
+
+            var result = RouteDiscoverer.DiscoverActionName(methodSymbol);
+
+            Assert.Equal("ActionMethod", result);
+        }
+
+        private static Compilation CreateCompilation(string source)
+            => CSharpCompilation.Create("compilation",
+                new[] { CSharpSyntaxTree.ParseText(source) },
+                new[]
+                {
+                    MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location),
+                    MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(ValueTuple<>).GetTypeInfo().Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Attribute).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Controller).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(ControllerBase).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(AreaAttribute).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(RouteValueAttribute).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(IUrlHelper).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(PageModel).Assembly.Location),
+                },
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
     }
 }

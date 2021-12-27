@@ -3,7 +3,6 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using FluentAssertions;
-using UrlActionGenerator;
 using UrlActionGenerator.Descriptors;
 using Xunit;
 using CodeGenerator = UrlActionGenerator.CodeGenerator;

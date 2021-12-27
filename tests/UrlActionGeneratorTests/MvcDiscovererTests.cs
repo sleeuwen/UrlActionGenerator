@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UrlActionGenerator;
+using UrlActionGenerator.Descriptors;
 using Xunit;
 
 namespace UrlActionGeneratorTests
@@ -450,6 +451,68 @@ namespace TestCode
 
             Assert.Empty(area.Name);
             Assert.Empty(area.Controllers);
+        }
+
+        [Fact]
+        public void CombineAreas_CombinesMultipleAreaDescriptors()
+        {
+            var area1 = new AreaDescriptor("");
+            var controller1 = new ControllerDescriptor(area1, "Home");
+            var action1 = new ActionDescriptor(controller1, "Index");
+            controller1.Actions.Add(action1);
+            area1.Controllers.Add(controller1);
+
+            var area2 = new AreaDescriptor("");
+            var controller2 = new ControllerDescriptor(area2, "Home");
+            var action2 = new ActionDescriptor(controller2, "Privacy");
+            controller2.Actions.Add(action2);
+            area2.Controllers.Add(controller2);
+
+            var area3 = new AreaDescriptor("");
+            var controller3 = new ControllerDescriptor(area3, "Contact");
+            var action3 = new ActionDescriptor(controller3, "Index");
+            controller3.Actions.Add(action3);
+            area3.Controllers.Add(controller3);
+
+            var areas = new[] { area1, area2, area3 };
+
+            var combined = MvcDiscoverer.CombineAreas(areas).ToList();
+
+            var area = Assert.Single(combined);
+            Assert.Equal(2, area.Controllers.Count);
+
+            var homeController = area.Controllers[0];
+            Assert.Equal("Home", homeController.Name);
+            Assert.Equal(2, homeController.Actions.Count);
+
+            var contactController = area.Controllers[1];
+            Assert.Equal("Contact", contactController.Name);
+            Assert.Equal(1, contactController.Actions.Count);
+        }
+
+        [Fact]
+        public void CombineAreas_IgnoresControllersWithoutActions()
+        {
+            var area1 = new AreaDescriptor("");
+            var controller1 = new ControllerDescriptor(area1, "Home");
+            area1.Controllers.Add(controller1);
+
+            var area2 = new AreaDescriptor("");
+            var controller2 = new ControllerDescriptor(area2, "Home");
+            var action2 = new ActionDescriptor(controller2, "Privacy");
+            controller2.Actions.Add(action2);
+            area2.Controllers.Add(controller2);
+
+            var areas = new[] { area1, area2 };
+
+            var combined = MvcDiscoverer.CombineAreas(areas).ToList();
+
+            var area = Assert.Single(combined);
+            Assert.Equal(1, area.Controllers.Count);
+
+            var homeController = area.Controllers[0];
+            Assert.Equal("Home", homeController.Name);
+            Assert.Equal(1, homeController.Actions.Count);
         }
 
         private static Compilation CreateCompilation(string source)

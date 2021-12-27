@@ -14,6 +14,57 @@ namespace UrlActionGeneratorTests.Extensions
     public class SymbolExtensionsTests
     {
         [Theory]
+        [InlineData("System.String", "System.String")]
+        [InlineData("System.String?", "System.String")]
+        [InlineData("System.Nullable<System.String>", "System.String")]
+        [InlineData("System.String[]", "System.String")]
+        [InlineData("System.Collections.Generic.List<System.String>", "System.String")]
+        [InlineData("System.Collections.Generic.IList<System.String>", "System.String")]
+        [InlineData("System.Collections.Generic.ICollection<System.String>", "System.String")]
+        [InlineData("System.Collections.Generic.IEnumerable<System.String>", "System.String")]
+        public void GetUnderlyingType(string type, string expected)
+        {
+            var compilation = CreateCompilation($@"
+public class TypeHolder
+{{
+    public TypeHolder({type} type)
+    {{
+    }}
+}}");
+
+            var classSyntax = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes()).OfType<ClassDeclarationSyntax>().Single();
+            var classSymbol = (ITypeSymbol)ModelExtensions.GetDeclaredSymbol(compilation.GetSemanticModel(classSyntax.SyntaxTree), classSyntax);
+
+            var method = classSymbol.GetMembers().OfType<IMethodSymbol>().Single();
+            var typeSymbol = method.Parameters.Single().Type;
+
+            var underlyingType = typeSymbol.GetUnderlyingType();
+
+            Assert.Equal(expected, underlyingType.GetFullNamespacedName());
+        }
+
+        [Theory]
+        [InlineData("System.Nullable<System.Int32>", "int?")]
+        public void GetTypeName(string type, string expected)
+        {
+            var compilation = CreateCompilation(@$"
+public class TypeHolder
+{{
+    public TypeHolder({type} type)
+    {{
+    }}
+}}");
+
+            var classSyntax = compilation.SyntaxTrees.SelectMany(st => st.GetRoot().DescendantNodes()).OfType<ClassDeclarationSyntax>().Single();
+            var classSymbol = (ITypeSymbol)ModelExtensions.GetDeclaredSymbol(compilation.GetSemanticModel(classSyntax.SyntaxTree), classSyntax);
+
+            var method = classSymbol.GetMembers().OfType<IMethodSymbol>().Single();
+            var result = method.Parameters.Single().Type.GetTypeName();
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
         [InlineData(null, "")]
         [InlineData("System.String", "string")]
         [InlineData("System.Byte", "byte")]
@@ -32,12 +83,12 @@ namespace UrlActionGeneratorTests.Extensions
         [InlineData("System.Object", "object")]
         [InlineData("System.DateTime", "System.DateTime")]
         [InlineData("System.DateTimeOffset", "System.DateTimeOffset")]
-        public void GetTypeName(string type, string expected)
+        public void GetSimpleTypeName(string type, string expected)
         {
             var compilation = CreateCompilation(@$"
 public class TypeHolder
 {{
-    public Method({type} type)
+    public TypeHolder({type} type)
     {{
     }}
 }}");

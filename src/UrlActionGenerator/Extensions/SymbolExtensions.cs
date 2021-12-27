@@ -124,12 +124,7 @@ namespace UrlActionGenerator.Extensions
         {
             while (method.IsOverride)
             {
-                if (method.OverriddenMethod is null)
-                {
-                    throw new ArgumentNullException(nameof(method.OverriddenMethod));
-                }
-
-                method = method.OverriddenMethod;
+                method = method.OverriddenMethod ?? throw new NullReferenceException("Found method that is an override but overridden method is null.");
             }
 
             return method.ContainingType;
