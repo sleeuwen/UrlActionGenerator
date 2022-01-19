@@ -40,7 +40,7 @@ namespace TestCode.Pages
 
             // Act
             var generatorContext = new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty);
-            var area = PagesDiscoverer.DiscoverAreaPages(razorPageItem, new GeneratorContext(generatorContext, ImmutableDictionary<string, ImmutableArray<string>>.Empty));
+            var area = PagesDiscoverer.DiscoverAreaPages(razorPageItem, new GeneratorPagesContext(generatorContext, ImmutableDictionary<string, ImmutableArray<string>>.Empty));
 
             // Assert
             compilation.GetDiagnostics().Should().HaveCount(0);

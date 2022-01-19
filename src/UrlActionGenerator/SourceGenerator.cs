@@ -78,8 +78,6 @@ namespace UrlActionGenerator
 
             static ITypeSymbol GetTypeSymbolForExcludedType(GeneratorSyntaxContext context)
             {
-                var excludedTypeAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName("UrlActionGenerator.ExcludedTypeAttribute");
-
                 var attribute = (AttributeSyntax)context.Node;
                 if (attribute.ArgumentList?.Arguments.Count != 1)
                     return null;
@@ -87,6 +85,8 @@ namespace UrlActionGenerator
                 var attributeName = attribute.Name.ToString();
                 if (!attributeName.EndsWith("ExcludedTypeAttribute") && !attributeName.EndsWith("ExcludedType"))
                     return null;
+
+                var excludedTypeAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName("UrlActionGenerator.ExcludedTypeAttribute");
 
                 var attributeType = context.SemanticModel.GetTypeInfo(attribute).Type;
                 if (attributeType == null || !attributeType.Equals(excludedTypeAttributeType))
@@ -152,7 +152,7 @@ namespace UrlActionGenerator
                 .Select(static (pages, _) => PagesDiscoverer.GatherImplicitUsings(pages));
 
             var pagesGeneratorContextProvider = generatorContextProvider.Combine(implicitlyImportedUsings)
-                .Select(static (tup, _) => new GeneratorContext(tup.Left, tup.Right));
+                .Select(static (tup, _) => new GeneratorPagesContext(tup.Left, tup.Right));
 
             var allPages = razorPages.Combine(pagesGeneratorContextProvider)
                 .Where(static tup => !tup.Right.IsViewsAssembly)

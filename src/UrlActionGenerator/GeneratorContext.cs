@@ -12,7 +12,11 @@ namespace UrlActionGenerator
         public GeneratorContext(Compilation compilation, ImmutableArray<ITypeSymbol> excludedTypes)
         {
             Compilation = compilation;
-            ExcludedTypes = excludedTypes;
+            ExcludedTypes = excludedTypes.AddRange(new[]
+            {
+                compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Http.IFormFile"),
+                compilation.GetTypeByMetadataName("System.Threading.CancellationToken"),
+            });
 
             IsViewsAssembly = compilation.AssemblyName?.EndsWith(".Views") == true;
 
@@ -22,13 +26,12 @@ namespace UrlActionGenerator
             DisposableDispose = (IMethodSymbol)members[0];
         }
 
-        public GeneratorContext(GeneratorContext context, ImmutableDictionary<string, ImmutableArray<string>> implicitlyImportedUsings)
+        protected GeneratorContext(GeneratorContext context)
         {
             Compilation = context.Compilation;
             ExcludedTypes = context.ExcludedTypes;
             IsViewsAssembly = context.IsViewsAssembly;
             DisposableDispose = context.DisposableDispose;
-            ImplicitlyImportedUsings = implicitlyImportedUsings;
         }
 
         public Compilation Compilation { get; }
@@ -36,8 +39,6 @@ namespace UrlActionGenerator
 
         public bool IsViewsAssembly { get; }
         public IMethodSymbol DisposableDispose { get; }
-
-        public ImmutableDictionary<string, ImmutableArray<string>> ImplicitlyImportedUsings { get; set; }
 
         public INamedTypeSymbol? GetTypeByMetadataName(string fullyQualifiedMetadataName)
         {
@@ -49,5 +50,16 @@ namespace UrlActionGenerator
 
             return symbol;
         }
+    }
+
+    internal class GeneratorPagesContext : GeneratorContext
+    {
+        public GeneratorPagesContext(GeneratorContext context, ImmutableDictionary<string, ImmutableArray<string>> implicitlyImportedUsings)
+            : base(context)
+        {
+            ImplicitlyImportedUsings = implicitlyImportedUsings;
+        }
+
+        public ImmutableDictionary<string, ImmutableArray<string>> ImplicitlyImportedUsings { get; set; }
     }
 }

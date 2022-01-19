@@ -19,7 +19,7 @@ namespace UrlActionGenerator
             foreach (var param in methodSymbol.Parameters)
             {
                 var paramType = param.Type.GetUnderlyingType();
-                if (IsExcludedType(paramType, context.ExcludedTypes))
+                if (context.ExcludedTypes.Contains(paramType))
                     continue;
 
                 var parameterAttributes = param.Type.GetAttributes(inherit: true);
@@ -37,15 +37,6 @@ namespace UrlActionGenerator
                     param.HasExplicitDefaultValue,
                     param.HasExplicitDefaultValue ? param.ExplicitDefaultValue : null);
             }
-        }
-
-        public static bool IsExcludedType(ITypeSymbol type, ImmutableArray<ITypeSymbol> excludedTypes)
-        {
-            if (excludedTypes.Contains(type))
-                return true;
-
-            var typeName = type.GetFullNamespacedName();
-            return typeName is "Microsoft.AspNetCore.Http.IFormFile" or "System.Threading.CancellationToken";
         }
 
         public static IEnumerable<ParameterDescriptor> DiscoverRouteParameters(string route)

@@ -200,16 +200,18 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using UrlActionGenerator;
+using TestCode;
 
 [assembly: UrlActionGenerator.ExcludedTypeAttribute(typeof(TestCode.Model))]
 [assembly: UrlActionGenerator.ExcludedType(typeof(TestCode.AnotherModel))]
 [assembly: ExcludedType(typeof(TestCode.ThirdModel))]
+[assembly: global::UrlActionGenerator.ExcludedType(typeof(FourthModel))]
 
 namespace TestCode
 {
     public class HomeController : Controller
     {
-        public IActionResult Index(Model model, AnotherModel anotherModel, int param, ThirdModel thirdModel, System.Threading.CancellationToken cancellationToken, IFormFile file, IFormFile[] files, System.Collections.Generic.List<IFormFile> files)
+        public IActionResult Index(Model model, AnotherModel anotherModel, int param, ThirdModel thirdModel, System.Threading.CancellationToken cancellationToken, IFormFile file, FourthModel fourthModel, IFormFile[] files, System.Collections.Generic.List<IFormFile> files)
         {
             return View();
         }
@@ -218,6 +220,7 @@ namespace TestCode
     public class Model {}
     public class AnotherModel {}
     public class ThirdModel {}
+    public class FourthModel {}
 }", Encoding.UTF8)),
                 },
                 null);

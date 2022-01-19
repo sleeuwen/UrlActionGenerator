@@ -62,7 +62,7 @@ namespace UrlActionGenerator
             }
         }
 
-        internal static PageAreaDescriptor DiscoverAreaPages(RazorPageItem page, GeneratorContext context)
+        internal static PageAreaDescriptor DiscoverAreaPages(RazorPageItem page, GeneratorPagesContext context)
         {
             var area = new PageAreaDescriptor(page.Area);
 
@@ -124,7 +124,7 @@ namespace UrlActionGenerator
                 .ToImmutableDictionary(g => g.Key, g => g.SelectMany(PagesFacts.ExtractUsings).Distinct().ToImmutableArray());
         }
 
-        private static INamedTypeSymbol GetPageModel(RazorPageItem razorPage, GeneratorContext context)
+        private static INamedTypeSymbol GetPageModel(RazorPageItem razorPage, GeneratorPagesContext context)
         {
             if (razorPage.Model == null)
                 return null;
