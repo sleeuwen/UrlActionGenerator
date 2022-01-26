@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
@@ -8,23 +9,25 @@ using UrlActionGenerator.Extensions;
 
 namespace UrlActionGenerator
 {
-    public static class RouteDiscoverer
+    internal static class RouteDiscoverer
     {
-        public static IEnumerable<ParameterDescriptor> DiscoverMethodParameters(IMethodSymbol methodSymbol)
+        public static IEnumerable<ParameterDescriptor> DiscoverMethodParameters(IMethodSymbol methodSymbol, GeneratorContext context)
         {
             if (methodSymbol is null)
                 yield break;
 
             foreach (var param in methodSymbol.Parameters)
             {
-                if (param.Type.GetFullNamespacedName() == "Microsoft.AspNetCore.Http.IFormFile") // TODO: IEnumerable<IFormFile>
+                var paramType = param.Type.GetUnderlyingType();
+                if (context.ExcludedParameterTypes.Contains(paramType))
                     continue;
 
-                var parameterAttributes = param.Type.GetAttributes(inherit: true);
+                var parameterAttributes = param.GetAttributes();
                 if (parameterAttributes.Any(attr =>
                     attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromFormAttribute"
                     || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromBodyAttribute"
-                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"))
+                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"
+                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromServicesAttribute"))
                 {
                     continue;
                 }
@@ -60,16 +63,19 @@ namespace UrlActionGenerator
             }
         }
 
-        public static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, Compilation compilation)
+        public static IEnumerable<ParameterDescriptor> DiscoverModelParameters(INamedTypeSymbol model, GeneratorContext context)
         {
             if (model == null) yield break;
 
-            var bindPropertyAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
-            var fromQueryAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
-            var fromRouteAttribute = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
+            var bindPropertyAttribute = context.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.BindPropertyAttribute");
+            var fromQueryAttribute = context.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
+            var fromRouteAttribute = context.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
 
             foreach (var member in model.GetMembers().OfType<IPropertySymbol>())
             {
+                if (context.ExcludedParameterTypes.Contains(member.Type))
+                    continue;
+
                 var attribute = member.GetAttributes().FirstOrDefault(attr =>
                     SymbolEqualityComparer.Default.Equals(attr.AttributeClass, bindPropertyAttribute) ||
                     SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromQueryAttribute) ||

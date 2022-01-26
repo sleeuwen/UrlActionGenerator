@@ -126,6 +126,15 @@ namespace UrlActionGeneratorTests
         public void IsController_ReturnsFalseForTypeDerivedFromPocoType() => IsControllerReturnsFalse(typeof(DerivedPocoType));
 
         [Fact]
+        public void IsController_ReturnsFalseForPrivateClass() => IsControllerReturnsFalse(typeof(PrivateController));
+
+        [Fact]
+        public void IsController_ReturnsFalseForInternalClass() => IsControllerReturnsFalse(typeof(InternalController));
+
+        [Fact]
+        public void IsController_ReturnsFalseForNestedClass() => IsControllerReturnsFalse(typeof(NestedControllerParent.NestedController));
+
+        [Fact]
         public void IsController_ReturnsTrueForTypeDerivingFromController() => IsControllerReturnsTrue(typeof(TypeDerivingFromController));
 
         [Fact]

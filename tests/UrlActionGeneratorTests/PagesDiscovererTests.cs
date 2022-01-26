@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using FluentAssertions;
@@ -34,18 +35,17 @@ namespace TestCode.Pages
     }
 }
 ");
-            var additionalFiles = new[] { new InMemoryAdditionalText("/Pages/Index.cshtml", @"@page ""{pageNumber}""
-@model TestCode.Pages.Index") };
+            var razorPageItem = new RazorPageItem(new InMemoryAdditionalText("/Pages/Index.cshtml", @"@page ""{pageNumber}""
+@model TestCode.Pages.Index"));
 
             // Act
-            var pages = PagesDiscoverer.DiscoverAreaPages(compilation, additionalFiles, null).ToList();
+            var generatorContext = new GeneratorContext(compilation, ImmutableArray<ITypeSymbol>.Empty);
+            var area = PagesDiscoverer.DiscoverAreaPages(razorPageItem, new GeneratorPagesContext(generatorContext, ImmutableDictionary<string, ImmutableArray<string>>.Empty));
 
             // Assert
             compilation.GetDiagnostics().Should().HaveCount(0);
 
-            pages.Should().HaveCount(1);
-            var area = pages.Single();
-
+            Assert.NotNull(area);
             area.Pages.Should().HaveCount(1);
             var page = area.Pages.Single();
 

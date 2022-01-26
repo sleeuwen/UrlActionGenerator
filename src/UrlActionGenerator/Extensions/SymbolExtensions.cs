@@ -8,6 +8,31 @@ namespace UrlActionGenerator.Extensions
 {
     internal static class SymbolExtensions
     {
+        private static readonly IList<string> _listTypes = new[] { "System.Collections.Generic.List<T>", "System.Collections.Generic.IList<T>", "System.Collections.Generic.ICollection<T>", "System.Collections.Generic.IEnumerable<T>" };
+
+        public static ITypeSymbol GetUnderlyingType(this ITypeSymbol type)
+        {
+            while (true)
+            {
+                if (type is IArrayTypeSymbol arrayType)
+                {
+                    type = arrayType.ElementType;
+                }
+                else if (type.IsSystemNullable())
+                {
+                    type = ((INamedTypeSymbol)type).TypeArguments[0];
+                }
+                else if (_listTypes.Contains(type.OriginalDefinition?.ToString()))
+                {
+                    type = ((INamedTypeSymbol)type).TypeArguments[0];
+                }
+                else
+                {
+                    return type;
+                }
+            }
+        }
+
         public static bool IsSystemNullable(this ITypeSymbol symbol)
         {
             if (symbol is not INamedTypeSymbol namedTypeSymbol)
@@ -99,12 +124,7 @@ namespace UrlActionGenerator.Extensions
         {
             while (method.IsOverride)
             {
-                if (method.OverriddenMethod is null)
-                {
-                    throw new ArgumentNullException(nameof(method.OverriddenMethod));
-                }
-
-                method = method.OverriddenMethod;
+                method = method.OverriddenMethod ?? throw new NullReferenceException("Found method that is an override but overridden method is null.");
             }
 
             return method.ContainingType;

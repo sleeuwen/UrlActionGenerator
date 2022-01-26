@@ -3,7 +3,6 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using FluentAssertions;
-using UrlActionGenerator;
 using UrlActionGenerator.Descriptors;
 using Xunit;
 using CodeGenerator = UrlActionGenerator.CodeGenerator;
@@ -48,7 +47,7 @@ namespace UrlActionGeneratorTests
             var writer = new IndentedTextWriter(stringWriter);
 
             // Act
-            CodeGenerator.WriteRouteValues(writer, Array.Empty<ParameterDescriptor>(), Array.Empty<KeyValuePair<string, object?>>());
+            CodeGenerator.WriteRouteValues(writer, Array.Empty<ParameterDescriptor>(), Array.Empty<KeyValuePair<string, object>>());
 
             // Assert
             var routeValuesCode = stringWriter.ToString();

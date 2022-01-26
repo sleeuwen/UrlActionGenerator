@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -188,6 +189,43 @@ namespace AspNetCoreSamplePages.Pages.Feature
                 "TestProject.Views");
         }
 
+        [Fact]
+        public Task Execute_ExcludedParameterTypeAttribute()
+        {
+            return RunAndVerify(
+                new[]
+                {
+                    ("HomeController.cs", SourceText.From(@"
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using UrlActionGenerator;
+using TestCode;
+
+[assembly: UrlActionGenerator.ExcludedParameterTypeAttribute(typeof(TestCode.Model))]
+[assembly: UrlActionGenerator.ExcludedParameterType(typeof(TestCode.AnotherModel))]
+[assembly: ExcludedParameterType(typeof(TestCode.ThirdModel))]
+[assembly: global::UrlActionGenerator.ExcludedParameterType(typeof(FourthModel))]
+
+namespace TestCode
+{
+    public class HomeController : Controller
+    {
+        public IActionResult Index(Model model, AnotherModel anotherModel, int param, ThirdModel thirdModel, System.Threading.CancellationToken cancellationToken, IFormFile file, FourthModel fourthModel, IFormFile[] files, System.Collections.Generic.List<IFormFile> files)
+        {
+            return View();
+        }
+    }
+
+    public class Model {}
+    public class AnotherModel {}
+    public class ThirdModel {}
+    public class FourthModel {}
+}", Encoding.UTF8)),
+                },
+                null);
+        }
+
         private static Task RunAndVerify(IEnumerable<(string Path, SourceText Source)> sources,
             IEnumerable<AdditionalText> additionalTexts = null, string assemblyName = null)
         {
@@ -225,6 +263,7 @@ namespace AspNetCoreSamplePages.Pages.Feature
                     MetadataReference.CreateFromFile(typeof(RouteValueAttribute).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(IUrlHelper).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(PageModel).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(IFormFile).Assembly.Location),
                 },
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 

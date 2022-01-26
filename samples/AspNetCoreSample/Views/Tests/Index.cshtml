@@ -11,6 +11,8 @@
     @* <li><a href="@Url.Actions().Tests.RouteParameterAndMethodParameter(2, "str")">Route Parameter And Method Parameter</a></li> *@
     <li><a href="@Url.Actions().Tests.DuplicateRouteParameter(2)">Duplicate Route Parameter</a></li>
     <li><a href="@Url.Actions().Tests.ComplexParameter(2, "str", new ComplexParameterModel { String = "str2", Model = new ComplexParameterModel.NestedModel { Int = 3 } })">Complex parameter</a></li>
+    <li><a href="@Url.Actions().Tests.ExcludedParameters()">Excluded parameter types</a></li>
+    <li><a href="@Url.Actions().Tests.ExcludesFromAttributes()">Excludes [FromXyz] parameters</a></li>
     <li>
         <form action="@Url.Actions().Tests.PostComplexParameter(null)?model.string=str" method="post">
             <input type="hidden" name="model.model.int" value="32" />
