@@ -19,14 +19,15 @@ namespace UrlActionGenerator
             foreach (var param in methodSymbol.Parameters)
             {
                 var paramType = param.Type.GetUnderlyingType();
-                if (context.ExcludedTypes.Contains(paramType))
+                if (context.ExcludedParameterTypes.Contains(paramType))
                     continue;
 
-                var parameterAttributes = param.Type.GetAttributes(inherit: true);
+                var parameterAttributes = param.GetAttributes();
                 if (parameterAttributes.Any(attr =>
                     attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromFormAttribute"
                     || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromBodyAttribute"
-                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"))
+                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromHeaderAttribute"
+                    || attr.AttributeClass.GetFullNamespacedName() == "Microsoft.AspNetCore.Mvc.FromServicesAttribute"))
                 {
                     continue;
                 }
@@ -72,7 +73,7 @@ namespace UrlActionGenerator
 
             foreach (var member in model.GetMembers().OfType<IPropertySymbol>())
             {
-                if (context.ExcludedTypes.Contains(member.Type))
+                if (context.ExcludedParameterTypes.Contains(member.Type))
                     continue;
 
                 var attribute = member.GetAttributes().FirstOrDefault(attr =>

@@ -190,7 +190,7 @@ namespace AspNetCoreSamplePages.Pages.Feature
         }
 
         [Fact]
-        public Task Execute_ExcludedTypeAttribute()
+        public Task Execute_ExcludedParameterTypeAttribute()
         {
             return RunAndVerify(
                 new[]
@@ -202,10 +202,10 @@ using Microsoft.AspNetCore.Mvc;
 using UrlActionGenerator;
 using TestCode;
 
-[assembly: UrlActionGenerator.ExcludedTypeAttribute(typeof(TestCode.Model))]
-[assembly: UrlActionGenerator.ExcludedType(typeof(TestCode.AnotherModel))]
-[assembly: ExcludedType(typeof(TestCode.ThirdModel))]
-[assembly: global::UrlActionGenerator.ExcludedType(typeof(FourthModel))]
+[assembly: UrlActionGenerator.ExcludedParameterTypeAttribute(typeof(TestCode.Model))]
+[assembly: UrlActionGenerator.ExcludedParameterType(typeof(TestCode.AnotherModel))]
+[assembly: ExcludedParameterType(typeof(TestCode.ThirdModel))]
+[assembly: global::UrlActionGenerator.ExcludedParameterType(typeof(FourthModel))]
 
 namespace TestCode
 {

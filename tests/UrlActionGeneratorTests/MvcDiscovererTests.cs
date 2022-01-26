@@ -487,7 +487,7 @@ namespace TestCode
 
             var contactController = area.Controllers[1];
             Assert.Equal("Contact", contactController.Name);
-            Assert.Equal(1, contactController.Actions.Count);
+            Assert.Single(contactController.Actions);
         }
 
         [Fact]
@@ -508,11 +508,11 @@ namespace TestCode
             var combined = MvcDiscoverer.CombineAreas(areas).ToList();
 
             var area = Assert.Single(combined);
-            Assert.Equal(1, area.Controllers.Count);
+            Assert.Single(area.Controllers);
 
             var homeController = area.Controllers[0];
             Assert.Equal("Home", homeController.Name);
-            Assert.Equal(1, homeController.Actions.Count);
+            Assert.Single(homeController.Actions);
         }
 
         private static Compilation CreateCompilation(string source)

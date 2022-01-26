@@ -9,10 +9,10 @@ namespace UrlActionGenerator
     {
         private Dictionary<string, INamedTypeSymbol?> _typeSymbolCache = new();
 
-        public GeneratorContext(Compilation compilation, ImmutableArray<ITypeSymbol> excludedTypes)
+        public GeneratorContext(Compilation compilation, ImmutableArray<ITypeSymbol> excludedParameterTypes)
         {
             Compilation = compilation;
-            ExcludedTypes = excludedTypes.AddRange(new[]
+            ExcludedParameterTypes = excludedParameterTypes.AddRange(new[]
             {
                 compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Http.IFormFile"),
                 compilation.GetTypeByMetadataName("System.Threading.CancellationToken"),
@@ -29,13 +29,13 @@ namespace UrlActionGenerator
         protected GeneratorContext(GeneratorContext context)
         {
             Compilation = context.Compilation;
-            ExcludedTypes = context.ExcludedTypes;
+            ExcludedParameterTypes = context.ExcludedParameterTypes;
             IsViewsAssembly = context.IsViewsAssembly;
             DisposableDispose = context.DisposableDispose;
         }
 
         public Compilation Compilation { get; }
-        public ImmutableArray<ITypeSymbol> ExcludedTypes { get; }
+        public ImmutableArray<ITypeSymbol> ExcludedParameterTypes { get; }
 
         public bool IsViewsAssembly { get; }
         public IMethodSymbol DisposableDispose { get; }

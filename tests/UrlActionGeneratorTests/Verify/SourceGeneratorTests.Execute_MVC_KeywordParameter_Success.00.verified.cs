@@ -1,10 +1,10 @@
-﻿//HintName: ExcludedTypeAttribute.cs
+﻿//HintName: ExcludedParameterTypeAttribute.cs
 namespace UrlActionGenerator
 {
     [System.AttributeUsage(System.AttributeTargets.Assembly)]
-    public sealed class ExcludedTypeAttribute : System.Attribute
+    public sealed class ExcludedParameterTypeAttribute : System.Attribute
     {
-        public ExcludedTypeAttribute(System.Type type)
+        public ExcludedParameterTypeAttribute(System.Type type)
         {
         }
     }
