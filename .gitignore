@@ -363,3 +363,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 .idea/
+
+# Verify
+*.received.*
